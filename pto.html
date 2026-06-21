@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор фотоотчётов | Инструмент инженера ПТО</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    padding: 12px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+
+  header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    color: #ffffff;
+    padding: 22px 18px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+  }
+  header h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; line-height: 1.25; }
+  header p  { font-size: 0.88rem; opacity: 0.85; }
+  header .badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-bottom: 10px; }
+
+  .panel { background: white; border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .panel-title { font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .panel-sub { font-size: 0.8rem; color: #64748b; margin-bottom: 14px; }
+  .nb { background: #2563eb; color: white; width: 24px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 800; flex-shrink: 0; }
+
+  .form-row { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px; }
+  .form-row input[type="text"], .form-row select {
+    width: 100%; padding: 11px 13px; border: 1.5px solid #cbd5e1; border-radius: 8px;
+    font-size: 0.92rem; color: #1e293b; font-family: inherit; background: white;
+  }
+  .form-row input:focus, .form-row select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .upload-zone {
+    border: 2px dashed #93c5fd; border-radius: 12px; padding: 28px 16px; text-align: center;
+    background: #eff6ff; cursor: pointer; transition: 0.15s; display: block;
+  }
+  .upload-zone:active { background: #dbeafe; }
+  .upload-zone .uz-icon { font-size: 2.2rem; margin-bottom: 8px; }
+  .upload-zone .uz-text { font-size: 0.92rem; font-weight: 700; color: #1e3a8a; margin-bottom: 4px; }
+  .upload-zone .uz-sub { font-size: 0.78rem; color: #64748b; }
+  #file-input { display: none; }
+
+  .photo-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .photo-item {
+    display: flex; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 10px; align-items: flex-start;
+  }
+  .photo-item .thumb-wrap { position: relative; flex-shrink: 0; }
+  .photo-item img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; display: block; }
+  .photo-item .order-badge {
+    position: absolute; top: -6px; left: -6px; background: #2563eb; color: white; font-size: 0.7rem;
+    font-weight: 800; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  }
+  .photo-item .pi-body { flex: 1; min-width: 0; }
+  .photo-item .pi-filename { font-size: 0.72rem; color: #94a3b8; margin-bottom: 4px; word-break: break-all; }
+  .photo-item textarea {
+    width: 100%; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 7px; font-size: 0.85rem;
+    font-family: inherit; color: #1e293b; resize: vertical; min-height: 44px;
+  }
+  .photo-item textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  .photo-item .pi-actions { display: flex; gap: 6px; margin-top: 6px; }
+  .pi-btn {
+    border: none; background: #e2e8f0; color: #475569; font-size: 0.72rem; font-weight: 700;
+    padding: 5px 9px; border-radius: 6px; cursor: pointer; font-family: inherit;
+  }
+  .pi-btn.danger { background: #fee2e2; color: #991b1b; }
+  .pi-btn:disabled { opacity: 0.35; cursor: default; }
+
+  .empty-state { text-align: center; padding: 24px 12px; color: #94a3b8; font-size: 0.85rem; }
+
+  .layout-options { display: flex; gap: 10px; }
+  .layout-opt {
+    flex: 1; border: 2px solid #cbd5e1; border-radius: 10px; padding: 12px 10px; text-align: center;
+    cursor: pointer; transition: 0.15s; background: white; display: block;
+  }
+  .layout-opt.active { border-color: #2563eb; background: #eff6ff; }
+  .layout-opt .lo-grid { display: grid; gap: 3px; width: 44px; height: 32px; margin: 0 auto 8px; }
+  .layout-opt .lo-grid .cell { background: #93c5fd; border-radius: 2px; }
+  .layout-opt.active .lo-grid .cell { background: #2563eb; }
+  .layout-opt .lo-label { font-size: 0.82rem; font-weight: 700; color: #334155; }
+  .layout-radio { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+
+  .generate-btn {
+    width: 100%; padding: 16px; border: none; border-radius: 12px; background: #16a34a; color: white;
+    font-size: 1.02rem; font-weight: 800; cursor: pointer; font-family: inherit; transition: 0.15s;
+    box-shadow: 0 4px 12px rgba(22,163,74,0.25);
+  }
+  .generate-btn:active { transform: scale(0.99); }
+  .generate-btn:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; }
+  .gen-status { text-align: center; font-size: 0.82rem; color: #64748b; margin-top: 10px; min-height: 1.2em; }
+  .gen-status.success { color: #16a34a; font-weight: 700; }
+
+  .privacy-note {
+    font-size: 0.76rem; color: #64748b; text-align: center; margin-top: 10px; line-height: 1.5;
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px;
+  }
+
+  /* ===== Счётчик бесплатных генераций ===== */
+  .usage-counter {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
+  }
+  .usage-counter .uc-label { font-size: 0.82rem; font-weight: 700; color: #334155; }
+  .usage-counter .uc-dots { display: flex; gap: 6px; }
+  .usage-counter .uc-dot { width: 14px; height: 14px; border-radius: 50%; background: #e2e8f0; border: 1.5px solid #cbd5e1; }
+  .usage-counter .uc-dot.used { background: #94a3b8; border-color: #94a3b8; }
+  .usage-counter .uc-dot.current { background: #16a34a; border-color: #16a34a; }
+  .usage-counter.warn { background: #fffbeb; border-color: #fde68a; }
+  .usage-counter.warn .uc-label { color: #92400e; }
+
+  /* ===== Paywall ===== */
+  .paywall { display: none; }
+  .paywall.show { display: block; }
+  .paywall-block {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 16px; padding: 26px 22px;
+    color: white; text-align: center;
+  }
+  .paywall-block .pw-icon { font-size: 2.4rem; margin-bottom: 10px; }
+  .paywall-block .pw-eyebrow { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #fbbf24; margin-bottom: 10px; }
+  .paywall-block h3 { font-size: 1.25rem; margin-bottom: 10px; line-height: 1.35; }
+  .paywall-block p { font-size: 0.88rem; opacity: 0.85; margin-bottom: 18px; line-height: 1.6; max-width: 440px; margin-left: auto; margin-right: auto; }
+  .paywall-block .pw-price { font-size: 1.6rem; font-weight: 900; margin-bottom: 4px; }
+  .paywall-block .pw-price span { font-size: 0.85rem; font-weight: 500; opacity: 0.7; }
+  .paywall-block .pw-features { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; text-align: left; max-width: 380px; margin-left: auto; margin-right: auto; }
+  .paywall-block .pw-features .pf { display: flex; gap: 8px; font-size: 0.85rem; align-items: flex-start; }
+  .paywall-block .pw-features .pf .ci { color: #22c55e; font-weight: 900; flex-shrink: 0; }
+  .paywall-block .pw-button {
+    display: inline-block; background: #fbbf24; color: #78350f; font-weight: 800; text-decoration: none;
+    padding: 14px 32px; border-radius: 8px; font-size: 1rem; margin-bottom: 8px;
+  }
+  .paywall-block .pw-subtext { font-size: 0.74rem; color: #94a3b8; }
+  .paywall-block .pw-reset { margin-top: 16px; font-size: 0.75rem; color: #64748b; }
+
+  footer { text-align: center; padding: 18px; color: #94a3b8; font-size: 0.8rem; }
+
+  @media (min-width: 600px) {
+    body { padding: 24px; }
+    .panel { padding: 22px 26px; }
+    header h1 { font-size: 1.6rem; }
+  }
+  @media (max-width: 420px) {
+    .photo-item { flex-direction: column; }
+    .photo-item img { width: 100%; height: 140px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <span class="badge">📸 Для инженеров ПТО</span>
+  <h1>Генератор фотоотчётов</h1>
+  <p>Загрузите фото со стройки, подпишите каждое — получите готовый PDF за минуту, без вёрстки вручную в Word.</p>
+</header>
+
+<div class="panel">
+  <div class="panel-title"><span class="nb">1</span> Реквизиты отчёта</div>
+  <div class="panel-sub">Эти данные попадут в заголовок PDF-файла.</div>
+
+  <div class="form-grid-2">
+    <div class="form-row">
+      <label for="rep-object">Объект</label>
+      <input type="text" id="rep-object" placeholder="Например: ЖК «Северный»">
+    </div>
+    <div class="form-row">
+      <label for="rep-date">Дата отчёта</label>
+      <input type="text" id="rep-date" placeholder="дд.мм.гггг">
+    </div>
+  </div>
+  <div class="form-row" style="margin-bottom:0;">
+    <label for="rep-title">Тема фотоотчёта</label>
+    <input type="text" id="rep-title" placeholder="Например: Армирование плиты перекрытия, секция 2">
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title"><span class="nb">2</span> Фотографии</div>
+  <div class="panel-sub">Можно выбрать сразу несколько фото с телефона или компьютера.</div>
+
+  <label class="upload-zone" for="file-input">
+    <div class="uz-icon">📷</div>
+    <div class="uz-text">Нажмите, чтобы выбрать фото</div>
+    <div class="uz-sub">JPG, PNG — можно выбрать сразу несколько файлов</div>
+  </label>
+  <input type="file" id="file-input" accept="image/*" multiple>
+
+  <div class="photo-list" id="photo-list">
+    <div class="empty-state" id="empty-state">Фото пока не добавлены</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title"><span class="nb">3</span> Раскладка на листе</div>
+  <div class="panel-sub">Сколько фотографий размещать на одной странице PDF.</div>
+
+  <input type="radio" name="layout" id="layout-2" class="layout-radio" checked>
+  <input type="radio" name="layout" id="layout-4" class="layout-radio">
+
+  <div class="layout-options">
+    <label class="layout-opt active" id="layout-opt-2" for="layout-2">
+      <div class="lo-grid" style="grid-template-rows: 1fr 1fr;">
+        <div class="cell"></div><div class="cell"></div>
+      </div>
+      <div class="lo-label">2 фото на лист</div>
+    </label>
+    <label class="layout-opt" id="layout-opt-4" for="layout-4">
+      <div class="lo-grid" style="grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;">
+        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      </div>
+      <div class="lo-label">4 фото на лист</div>
+    </label>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title"><span class="nb">4</span> Генерация PDF</div>
+  <div class="panel-sub">Файл соберётся прямо в браузере и сразу скачается на ваше устройство.</div>
+
+  <div class="usage-counter" id="usage-counter">
+    <span class="uc-label" id="uc-label">Бесплатно: 3 генерации на это устройство</span>
+    <div class="uc-dots" id="uc-dots">
+      <div class="uc-dot current"></div>
+      <div class="uc-dot"></div>
+      <div class="uc-dot"></div>
+    </div>
+  </div>
+
+  <div id="generate-area">
+    <button class="generate-btn" id="generate-btn" disabled>Добавьте хотя бы одно фото</button>
+    <div class="gen-status" id="gen-status"></div>
+    <div class="privacy-note">🔒 Все фото обрабатываются локально в вашем браузере. Ничего не загружается на сервер — это просто страница, которая собирает PDF прямо у вас на устройстве.</div>
+  </div>
+
+  <div class="paywall" id="paywall">
+    <div class="paywall-block">
+      <div class="pw-icon">🔒</div>
+      <div class="pw-eyebrow">Бесплатный лимит исчерпан</div>
+      <h3>Вы использовали все 3 бесплатные генерации</h3>
+      <p>Дальше — подписка для инженеров ПТО. Безлимитная генерация фотоотчётов, без ограничений по количеству фото и объектов.</p>
+      <div class="pw-price">1 500 ₽<span> / мес за одно рабочее место</span></div>
+      <div class="pw-features">
+        <div class="pf"><span class="ci">✓</span><span>Безлимитная генерация PDF-фотоотчётов</span></div>
+        <div class="pf"><span class="ci">✓</span><span>Раскладки 2 и 4 фото на лист, скоро — больше шаблонов</span></div>
+        <div class="pf"><span class="ci">✓</span><span>Работает на любом устройстве — телефон, планшет, компьютер</span></div>
+      </div>
+      <a href="https://example.com" target="_blank" class="pw-button">Оформить подписку</a>
+      <div class="pw-subtext">Оплата картой · отмена в любой момент</div>
+      <div class="pw-reset">Тестируете сами? Лимит привязан к этому браузеру и обнуляется при очистке данных сайта.</div>
+    </div>
+  </div>
+</div>
+
+<footer><p>Генератор фотоотчётов · инструмент для инженеров ПТО</p></footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var photos = [];
+  var nextId = 1;
+  var currentLayout = 2;
+
+  var FREE_LIMIT = 3;
+  var STORAGE_KEY = "photoReportGen_usageCount";
+
+  var fileInput = document.getElementById("file-input");
+  var photoList = document.getElementById("photo-list");
+  var emptyState = document.getElementById("empty-state");
+  var generateBtn = document.getElementById("generate-btn");
+  var genStatus = document.getElementById("gen-status");
+  var generateArea = document.getElementById("generate-area");
+  var paywall = document.getElementById("paywall");
+  var usageCounter = document.getElementById("usage-counter");
+  var ucLabel = document.getElementById("uc-label");
+  var ucDots = document.getElementById("uc-dots");
+
+  function getUsageCount() {
+    try {
+      var v = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+      return isNaN(v) ? 0 : v;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function setUsageCount(n) {
+    try { localStorage.setItem(STORAGE_KEY, String(n)); } catch (e) { /* ignore */ }
+  }
+
+  function renderUsageUI() {
+    var used = getUsageCount();
+    var remaining = Math.max(0, FREE_LIMIT - used);
+
+    ucDots.innerHTML = "";
+    for (var i = 0; i < FREE_LIMIT; i++) {
+      var dot = document.createElement("div");
+      dot.className = "uc-dot";
+      if (i < used) dot.classList.add("used");
+      else if (i === used) dot.classList.add("current");
+      ucDots.appendChild(dot);
+    }
+
+    if (remaining <= 0) {
+      usageCounter.classList.add("warn");
+      ucLabel.textContent = "Бесплатный лимит исчерпан (0 из " + FREE_LIMIT + ")";
+      generateArea.style.display = "none";
+      paywall.classList.add("show");
+    } else {
+      usageCounter.classList.remove("warn");
+      ucLabel.textContent = "Бесплатно: осталось " + remaining + " из " + FREE_LIMIT + " генераций";
+      generateArea.style.display = "block";
+      paywall.classList.remove("show");
+    }
+  }
+
+  fileInput.addEventListener("change", function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    files.forEach(function (file) {
+      if (!file.type.indexOf || file.type.indexOf("image/") !== 0) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        photos.push({ id: nextId++, file: file, dataUrl: ev.target.result, caption: "" });
+        renderPhotoList();
+      };
+      reader.readAsDataURL(file);
+    });
+    fileInput.value = "";
+  });
+
+  function renderPhotoList() {
+    photoList.innerHTML = "";
+    if (photos.length === 0) {
+      photoList.appendChild(emptyState);
+      updateGenerateBtn();
+      return;
+    }
+
+    photos.forEach(function (photo, idx) {
+      var item = document.createElement("div");
+      item.className = "photo-item";
+
+      var thumbWrap = document.createElement("div");
+      thumbWrap.className = "thumb-wrap";
+      var img = document.createElement("img");
+      img.src = photo.dataUrl;
+      var badge = document.createElement("div");
+      badge.className = "order-badge";
+      badge.textContent = idx + 1;
+      thumbWrap.appendChild(img);
+      thumbWrap.appendChild(badge);
+
+      var body = document.createElement("div");
+      body.className = "pi-body";
+
+      var fname = document.createElement("div");
+      fname.className = "pi-filename";
+      fname.textContent = photo.file.name;
+
+      var textarea = document.createElement("textarea");
+      textarea.placeholder = "Подпись к фото, например: Армирование плиты перекрытия";
+      textarea.value = photo.caption;
+      textarea.addEventListener("input", function () {
+        photo.caption = textarea.value;
+      });
+
+      var actions = document.createElement("div");
+      actions.className = "pi-actions";
+
+      var upBtn = document.createElement("button");
+      upBtn.className = "pi-btn";
+      upBtn.type = "button";
+      upBtn.textContent = "↑ Выше";
+      upBtn.disabled = idx === 0;
+      upBtn.addEventListener("click", function () { movePhoto(idx, -1); });
+
+      var downBtn = document.createElement("button");
+      downBtn.className = "pi-btn";
+      downBtn.type = "button";
+      downBtn.textContent = "↓ Ниже";
+      downBtn.disabled = idx === photos.length - 1;
+      downBtn.addEventListener("click", function () { movePhoto(idx, 1); });
+
+      var delBtn = document.createElement("button");
+      delBtn.className = "pi-btn danger";
+      delBtn.type = "button";
+      delBtn.textContent = "✕ Удалить";
+      delBtn.addEventListener("click", function () {
+        photos = photos.filter(function (p) { return p.id !== photo.id; });
+        renderPhotoList();
+      });
+
+      actions.appendChild(upBtn);
+      actions.appendChild(downBtn);
+      actions.appendChild(delBtn);
+
+      body.appendChild(fname);
+      body.appendChild(textarea);
+      body.appendChild(actions);
+
+      item.appendChild(thumbWrap);
+      item.appendChild(body);
+      photoList.appendChild(item);
+    });
+
+    updateGenerateBtn();
+  }
+
+  function movePhoto(idx, dir) {
+    var newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= photos.length) return;
+    var tmp = photos[idx];
+    photos[idx] = photos[newIdx];
+    photos[newIdx] = tmp;
+    renderPhotoList();
+  }
+
+  function updateGenerateBtn() {
+    if (photos.length === 0) {
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Добавьте хотя бы одно фото";
+    } else {
+      generateBtn.disabled = false;
+      generateBtn.textContent = "Сгенерировать PDF (" + photos.length + " фото)";
+    }
+  }
+
+  function setLayout(n) {
+    currentLayout = n;
+    document.getElementById("layout-opt-2").classList.toggle("active", n === 2);
+    document.getElementById("layout-opt-4").classList.toggle("active", n === 4);
+  }
+  document.getElementById("layout-2").addEventListener("change", function () { if (this.checked) setLayout(2); });
+  document.getElementById("layout-4").addEventListener("change", function () { if (this.checked) setLayout(4); });
+
+  function loadImageDims(dataUrl) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () { resolve({ w: img.naturalWidth, h: img.naturalHeight }); };
+      img.onerror = function () { resolve({ w: 4, h: 3 }); };
+      img.src = dataUrl;
+    });
+  }
+
+  function pageWord(n) {
+    var mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return "страница";
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "страницы";
+    return "страниц";
+  }
+
+  generateBtn.addEventListener("click", function () {
+    if (photos.length === 0) return;
+    if (getUsageCount() >= FREE_LIMIT) {
+      renderUsageUI();
+      return;
+    }
+    if (typeof window.jspdf === "undefined") {
+      genStatus.textContent = "Не удалось загрузить библиотеку PDF. Проверьте подключение к интернету и обновите страницу.";
+      genStatus.className = "gen-status";
+      return;
+    }
+
+    generateBtn.disabled = true;
+    genStatus.textContent = "Собираем PDF, подождите…";
+    genStatus.className = "gen-status";
+
+    var objectName = document.getElementById("rep-object").value.trim() || "Объект не указан";
+    var repDate = document.getElementById("rep-date").value.trim() || "—";
+    var repTitle = document.getElementById("rep-title").value.trim() || "Фотоотчёт";
+
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+    var pageW = 210, pageH = 297;
+    var margin = 12;
+    var headerH = 22;
+    var contentTop = margin + headerH;
+    var contentBottom = pageH - margin;
+    var contentH = contentBottom - contentTop;
+    var contentW = pageW - margin * 2;
+
+    var perPage = currentLayout;
+    var cols = perPage === 4 ? 2 : 1;
+    var rows = 2;
+    var gap = 8;
+    var cellW = (contentW - gap * (cols - 1)) / cols;
+    var cellH = (contentH - gap * (rows - 1)) / rows;
+
+    function drawHeader(pageNum, totalPages) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(15, 23, 42);
+      doc.text(repTitle, margin, margin + 6);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Объект: " + objectName + "    Дата: " + repDate, margin, margin + 12);
+
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.3);
+      doc.line(margin, margin + headerH - 4, pageW - margin, margin + headerH - 4);
+
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text("Стр. " + pageNum + " из " + totalPages, pageW - margin, pageH - 6, { align: "right" });
+    }
+
+    Promise.all(photos.map(function (p) { return loadImageDims(p.dataUrl); })).then(function (dims) {
+      var totalPages = Math.ceil(photos.length / perPage);
+
+      for (var i = 0; i < photos.length; i++) {
+        var pageIdx = Math.floor(i / perPage);
+        var posOnPage = i % perPage;
+
+        if (posOnPage === 0) {
+          if (pageIdx > 0) doc.addPage();
+          drawHeader(pageIdx + 1, totalPages);
+        }
+
+        var col = perPage === 4 ? posOnPage % 2 : 0;
+        var row = perPage === 4 ? Math.floor(posOnPage / 2) : posOnPage;
+
+        var cellX = margin + col * (cellW + gap);
+        var cellY = contentTop + row * (cellH + gap);
+
+        var captionH = 10;
+        var imgAreaH = cellH - captionH;
+
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.4);
+        doc.rect(cellX, cellY, cellW, cellH);
+
+        var pad = 3;
+        var availW = cellW - pad * 2;
+        var availH = imgAreaH - pad * 2;
+        var dim = dims[i];
+        var ratio = Math.min(availW / dim.w, availH / dim.h);
+        var drawW = dim.w * ratio;
+        var drawH = dim.h * ratio;
+        var imgX = cellX + (cellW - drawW) / 2;
+        var imgY = cellY + pad + (availH - drawH) / 2;
+
+        try {
+          var format = photos[i].file.type.indexOf("png") !== -1 ? "PNG" : "JPEG";
+          doc.addImage(photos[i].dataUrl, format, imgX, imgY, drawW, drawH);
+        } catch (e) {
+          doc.setFontSize(8);
+          doc.setTextColor(220, 38, 38);
+          doc.text("Не удалось вставить изображение", cellX + 4, cellY + imgAreaH / 2);
+        }
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(30, 41, 59);
+        var captionText = "Фото " + (i + 1) + ". " + (photos[i].caption.trim() || "Без подписи");
+        var captionLines = doc.splitTextToSize(captionText, cellW - 6);
+        doc.text(captionLines.slice(0, 2), cellX + 3, cellY + imgAreaH + 5);
+      }
+
+      var fileNameSafe = (objectName !== "Объект не указан" ? objectName : "Фотоотчет")
+        .replace(/[^a-zA-Zа-яА-ЯёЁ0-9 _-]/g, "")
+        .trim()
+        .replace(/\s+/g, "_");
+      doc.save((fileNameSafe || "Фотоотчет") + ".pdf");
+
+      setUsageCount(getUsageCount() + 1);
+      renderUsageUI();
+
+      genStatus.textContent = "✓ PDF готов и скачан (" + photos.length + " фото, " + totalPages + " " + pageWord(totalPages) + ")";
+      genStatus.className = "gen-status success";
+      generateBtn.disabled = false;
+      updateGenerateBtn();
+    }).catch(function (err) {
+      genStatus.textContent = "Произошла ошибка при сборке PDF. Попробуйте ещё раз.";
+      genStatus.className = "gen-status";
+      generateBtn.disabled = false;
+      updateGenerateBtn();
+    });
+  });
+
+  renderPhotoList();
+  renderUsageUI();
+})();
+</script>
+</body>
+</html>
