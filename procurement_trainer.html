@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тренажёр Снабженца | Модуль 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: #f4f7f6;
+    color: #1e293b;
+    padding: 12px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  .container { max-width: 860px; margin: 0 auto; }
+
+  /* Шапка */
+  header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    color: #ffffff;
+    padding: 20px 16px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+  }
+  header h1 { font-size: 1.35rem; font-weight: 800; margin-bottom: 6px; line-height: 1.3; }
+  header p  { font-size: 0.9rem; opacity: 0.9; }
+  header .tip { margin-top: 12px; font-size: 0.8rem; background: rgba(255,255,255,0.15); padding: 10px 12px; border-radius: 8px; font-weight: 500; }
+
+  section { background: white; padding: 20px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  h2 { color: #1e3a8a; font-size: 1.1rem; margin-bottom: 6px; line-height: 1.3; display: flex; align-items: center; gap: 8px; }
+  .nb { background: #f59e0b; color: white; width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: bold; flex-shrink: 0; }
+  .instruction { color: #64748b; font-size: 0.85rem; margin-bottom: 16px; font-style: italic; }
+
+  /* Блок 1: Словарь-переводчик */
+  .vgroup { margin-bottom: 16px; }
+  .vgroup-title { font-size: 0.85rem; font-weight: 700; color: white; padding: 6px 12px; border-radius: 6px; margin-bottom: 10px; display: inline-block; background: #475569; }
+  .vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .vc { background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0;}
+  .vc .slang { font-size: 1.05rem; font-weight: bold; color: #0f172a; margin-bottom: 4px; }
+  .vc .fsnb  { font-size: 0.8rem; color: #2563eb; font-weight: 600; line-height: 1.2; margin-bottom: 4px; }
+  .vc .unit  { font-size: 0.75rem; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+
+  /* Блок 2: Вопросы Правда/Ложь */
+  .q { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #2563eb; border: 1px solid #e2e8f0; border-left-width: 4px;}
+  .q-text { font-weight: 600; font-size: 1rem; margin-bottom: 12px; line-height: 1.4; color: #1e293b; }
+  
+  .opt-input { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+  .tf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 320px; }
+  .opt {
+    display: flex; align-items: center; justify-content: center;
+    background: white; border: 2px solid #cbd5e1;
+    padding: 10px; border-radius: 6px;
+    font-size: 0.95rem; font-weight: 600; text-align: center;
+    cursor: pointer; user-select: none; transition: 0.2s;
+  }
+  .opt:active { transform: scale(0.98); }
+  
+  /* Логика правильных/неправильных ответов */
+  .opt-input.ok:checked + .opt { background: #dcfce7; border-color: #22c55e; color: #166534; }
+  .opt-input.ok:checked + .opt::after { content: " ✓"; }
+  .opt-input.no:checked + .opt { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .opt-input.no:checked + .opt::after { content: " ✗"; }
+
+  .hint-box { display: none; margin-top: 12px; padding: 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; line-height: 1.4; }
+  .opt-input.ok:checked ~ .hint-box.success { display: block; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .opt-input.no:checked ~ .hint-box.error { display: block; background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+  /* Блок 3: Скрытые ответы (Подвохи) */
+  .fib { background: #fffbeb; padding: 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.95rem; line-height: 1.5; border: 1px solid #fde68a; }
+  .fib .task-title { font-weight: bold; color: #92400e; margin-bottom: 8px; }
+  .fib .doc-snippet { font-family: monospace; background: #fef3c7; padding: 10px; border-left: 3px solid #f59e0b; margin-bottom: 12px; font-size: 0.9rem; color: #52525b; }
+
+  details.ans { margin-top: 12px; border-radius: 6px; border: 1px solid #cbd5e1; overflow: hidden; }
+  details.ans summary { cursor: pointer; padding: 12px 16px; font-size: 0.9rem; font-weight: 600; color: #2563eb; list-style: none; user-select: none; background: #f8fafc; }
+  details.ans summary::before { content: "👁 Показать разбор ошибки"; }
+  details.ans[open] summary::before { content: "🙈 Скрыть разбор"; }
+  details.ans summary::-webkit-details-marker { display: none; }
+  details.ans .body { padding: 14px 16px; font-size: 0.9rem; color: #1e293b; background: white; border-top: 1px solid #cbd5e1; line-height: 1.6; }
+  details.ans .body .h  { font-weight: bold; color: #ef4444; margin-bottom: 4px; display: block; }
+  details.ans .body .p  { color: #334155; }
+
+  footer { text-align: center; padding: 20px; color: #64748b; font-size: 0.85rem; }
+  .cta-footer { margin-top: 20px; padding: 20px; background: #1e3a8a; border-radius: 12px; color: white; text-align: center; }
+  .cta-footer h3 { margin-bottom: 10px; }
+  .cta-footer a { display: inline-block; background: #f59e0b; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; margin-top: 10px; }
+
+  @media (min-width: 600px) { body { padding: 24px; } section { padding: 24px; } header h1 { font-size: 1.6rem; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>🏗️ Тренажёр Снабженца</h1>
+  <p>Модуль 1: Чтение смет, КАЦ и поиск подвохов в КП</p>
+  <div class="tip">💡 Как проходить: В заданиях нажимайте на варианты ответа. Тренажер сразу покажет ошибки и даст юридический разбор.</div>
+</header>
+
+<!-- РАЗДЕЛ 1: СЛОВАРЬ -->
+<section>
+  <h2><span class="nb">1</span> Переводчик: Со стройки на русский</h2>
+  <p class="instruction">Изучите термины. Прорабы говорят на сленге, но в 1С и ERP мы заводим официальные названия.</p>
+
+  <div class="vgroup">
+    <div class="vgroup-title">Общестрой и материалы</div>
+    <div class="vocab-grid">
+      <div class="vc"><div class="slang">Чекушка</div><div class="fsnb">Кирпич 3/4 (трехчетвертной)</div><div class="unit">Ед: шт</div></div>
+      <div class="vc"><div class="slang">ПГС</div><div class="fsnb">Смесь песчано-гравийная</div><div class="unit">Ед: м³</div></div>
+      <div class="vc"><div class="slang">Пенка</div><div class="fsnb">Пена монтажная полиуретановая</div><div class="unit">Ед: баллон / л</div></div>
+      <div class="vc"><div class="slang">Глухарь</div><div class="fsnb">Шуруп сантехнический (DIN 571)</div><div class="unit">Ед: шт / кг</div></div>
+      <div class="vc"><div class="slang">Шляпа / Грибок</div><div class="fsnb">Дюбель фасадный тарельчатый</div><div class="unit">Ед: шт</div></div>
+      <div class="vc"><div class="slang">Арматура-десятка</div><div class="fsnb">Сталь арматурная А500С Ø10 мм</div><div class="unit">Ед: т (тонна)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- РАЗДЕЛ 2: ПРАВДА ИЛИ ЛОЖЬ -->
+<section>
+  <h2><span class="nb">2</span> Юридические ловушки (КАЦ)</h2>
+  <p class="instruction">Проверьте свои знания правил закупки. Нажмите "Верно" или "Неверно".</p>
+
+  <div class="q">
+    <div class="q-text">Утверждение: «В коммерческом предложении (КП) для конъюнктурного анализа достаточно только печати организации. ИНН поставщика указывать не обязательно».</div>
+    <div class="tf-row">
+      <label><input type="radio" name="tf1" class="opt-input no"><span class="opt">Верно</span></label>
+      <label><input type="radio" name="tf1" class="opt-input ok"><span class="opt">Неверно</span></label>
+      
+      <div class="hint-box error">ОШИБКА! Экспертиза завернет такое КП. Согласно Методике Минстроя, ИНН, КПП, дата и адрес поставщика — обязательные реквизиты. Без ИНН документ юридически ничтожен.</div>
+      <div class="hint-box success">ПРАВИЛЬНО! Экспертиза требует жесткой идентификации. ИНН, КПП, дата и адрес — обязательны, иначе проверяющий вычеркнет эту позицию из сметы.</div>
+    </div>
+  </div>
+
+  <div class="q">
+    <div class="q-text">Утверждение: «Конъюнктурный анализ цен (сбор 3-х КП) нужно делать абсолютно на все материалы в проекте, включая обычный песок и щебень».</div>
+    <div class="tf-row">
+      <label><input type="radio" name="tf2" class="opt-input no"><span class="opt">Верно</span></label>
+      <label><input type="radio" name="tf2" class="opt-input ok"><span class="opt">Неверно</span></label>
+
+      <div class="hint-box error">ОШИБКА! Базовые материалы (песок, бетон) берутся из базы ФСНБ. КАЦ делается только на уникальные "прайсовые" позиции, которых нет в справочниках (например, сложное оборудование или МАФы).</div>
+      <div class="hint-box success">ПРАВИЛЬНО! Вы экономите время. Базовые ресурсы оцениваются по ФГИС ЦС / ФСНБ. КАЦ собираем только на то, чего нет в базе государства.</div>
+    </div>
+  </div>
+</section>
+
+<!-- РАЗДЕЛ 3: ПОИСК ПОДВОХОВ -->
+<section>
+  <h2><span class="nb">3</span> Найди подвох в документах</h2>
+  <p class="instruction">Прочитайте реальные выдержки из счетов поставщиков и найдите скрытые риски.</p>
+
+  <div class="fib">
+    <div class="task-title">Кейс №1: Закупка арматуры и логистика</div>
+    <div class="doc-snippet">
+      "Счет №45 от 12 мая. Сталь арматурная 12мм — 20 тонн. <br>
+      Условия: Доставка до объекта (Уссурийск) включена в стоимость. Разгрузка товара осуществляется силами Покупателя. Нормативное время выгрузки — 2 часа. Простой ТС свыше норматива оплачивается по тарифу 3000 руб/час."
+    </div>
+    <p><strong>Вопрос:</strong> В чем главный риск для снабженца, если на стройплощадке на этот день не заказан башенный кран?</p>
+    
+    <details class="ans"><summary></summary>
+      <div class="body">
+        <span class="h">Скрытая переплата за простой фуры (штраф)</span>
+        <span class="p">Разгрузить 20 тонн арматуры (длинномеры по 11.7 метров) руками грузчиков за 2 часа — физически невозможно. Без крана разгрузка займет весь день (около 8-10 часов). 
+        <br><br>
+        <strong>Итог:</strong> Компания заплатит скрытый штраф: 8 часов * 3000 руб = <strong>24 000 рублей убытка</strong>. Снабженец обязан был либо заказать автокран на объект к приезду фуры, либо требовать у поставщика доставку машиной с краном-манипулятором (фишкой).</span>
+      </div>
+    </details>
+  </div>
+
+  <div class="fib">
+    <div class="task-title">Кейс №2: Закупка детских площадок (МАФ)</div>
+    <div class="doc-snippet">
+      "Коммерческое предложение. Игровой комплекс «Сказка» — 1 шт, 450 000 руб. <br>
+      Условия оплаты: 100% предоплата. Срок изготовления — 45 рабочих дней. Цена указана на складе Поставщика в г. Москва."
+    </div>
+    <p><strong>Вопрос:</strong> Сметчик требует от вас это КП для конъюнктурного анализа по объекту в Приморском крае. Что с ним не так?</p>
+    
+    <details class="ans"><summary></summary>
+      <div class="body">
+        <span class="h">В цену не включена логистика через всю страну</span>
+        <span class="p">В КП указана цена "со склада в Москве" (EXW/FCA). Если сметчик заложит в бюджет проекта 450 000 руб., то когда дело дойдет до закупки, доставка негабаритного груза из Москвы в Приморье обойдется еще в 150 000 – 200 000 руб.
+        <br><br>
+        <strong>Итог:</strong> Эти 200 тысяч станут чистым убытком компании. Снабженец обязан был запросить КП с формулировкой "Цена с учетом доставки до объекта в г. Уссурийск" или приложить отдельную справку от транспортной компании.</span>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- РЕКЛАМНЫЙ БЛОК (ВОРОНКА) -->
+<div class="cta-footer">
+  <h3>Автоматизируйте рутину снабжения</h3>
+  <p>Тяжело держать в голове все ИНН, ставки на логистику и сленг прорабов?<br> Наша строительная ERP-система автоматически собирает правильные КАЦ и переводит заявки с объектов в единую базу номенклатуры.</p>
+  <a href="https://example.com" target="_blank">Попробовать ERP-систему</a>
+</div>
+
+<footer><p>© 2026 Инструменты для строительного бизнеса</p></footer>
+
+</div>
+</body>
+</html>
