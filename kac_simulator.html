@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Симулятор КАЦ | Сможешь собрать конъюнктурный анализ без ошибок?</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    padding: 12px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+
+  /* ===== Шапка ===== */
+  header {
+    background: linear-gradient(135deg, #7c2d12 0%, #dc2626 50%, #ea580c 100%);
+    color: #ffffff;
+    padding: 22px 18px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.25);
+  }
+  header h1 { font-size: 1.45rem; font-weight: 800; margin-bottom: 6px; line-height: 1.25; }
+  header p  { font-size: 0.9rem; opacity: 0.92; margin-bottom: 10px; }
+  header .badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.18); padding: 7px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+
+  /* ===== Общий счёт игры ===== */
+  .game-score {
+    background: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .game-score .label { font-size: 0.8rem; font-weight: 700; color: #475569; }
+  .game-score .value { font-size: 1.05rem; font-weight: 800; color: #dc2626; }
+  .round-pills { display: flex; gap: 6px; }
+  .round-pill { width: 30px; height: 30px; border-radius: 50%; background: #e2e8f0; color: #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; border: 2px solid transparent; }
+  .round-pill.active { border-color: #dc2626; color: #dc2626; background: white; }
+  .round-pill.done { background: #16a34a; color: white; }
+
+  /* ===== Раунд ===== */
+  .round { background: white; border-radius: 16px; margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+  .round-head { padding: 18px 20px; background: #fef2f2; border-bottom: 2px solid #fee2e2; }
+  .round-head .rlabel { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #dc2626; margin-bottom: 4px; }
+  .round-head h2 { font-size: 1.2rem; color: #7c2d12; line-height: 1.3; }
+  .round-head .rsub { font-size: 0.85rem; color: #78716c; margin-top: 4px; }
+  .round-body { padding: 20px; }
+
+  .round-instruction {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 14px;
+    font-size: 0.85rem; color: #92400e; margin-bottom: 18px; line-height: 1.5;
+  }
+  .round-instruction b { color: #78350f; }
+
+  /* ===== Карточки КП ===== */
+  .kp-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+  .kp-card {
+    border: 2px solid #e2e8f0; border-radius: 12px; padding: 14px 44px 14px 16px; cursor: pointer;
+    transition: 0.15s; position: relative; background: #fff;
+  }
+  .kp-card:active { transform: scale(0.99); }
+  .kp-card.selected { border-color: #2563eb; background: #eff6ff; }
+  .kp-card.correct { border-color: #16a34a; background: #f0fdf4; }
+  .kp-card.wrong { border-color: #dc2626; background: #fef2f2; }
+  .kp-card .kp-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .kp-card .kp-supplier { font-weight: 800; font-size: 1rem; color: #0f172a; }
+  .kp-card .kp-price { font-weight: 800; font-size: 1.1rem; color: #dc2626; white-space: nowrap; }
+  .kp-card .kp-details { font-size: 0.83rem; color: #475569; line-height: 1.6; }
+  .kp-card .kp-details .row { display: flex; gap: 6px; }
+  .kp-card .kp-details .row .k { color: #94a3b8; min-width: 92px; flex-shrink: 0; }
+  .kp-card .checkbox-indicator {
+    position: absolute; top: 14px; right: 14px; width: 26px; height: 26px; border-radius: 7px;
+    border: 2px solid #cbd5e1; background: white; display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 900; color: white; flex-shrink: 0;
+  }
+  .kp-card.selected .checkbox-indicator { border-color: #2563eb; background: #2563eb; }
+  .kp-card.selected .checkbox-indicator::after { content: "✓"; }
+  .kp-card .verdict-tag { display: none; margin-top: 10px; font-size: 0.8rem; font-weight: 700; padding: 8px 10px; border-radius: 7px; line-height: 1.4; }
+  .kp-card.revealed .verdict-tag { display: block; }
+  .kp-card.revealed.correct .verdict-tag { background: #dcfce7; color: #166534; }
+  .kp-card.revealed.wrong .verdict-tag { background: #fee2e2; color: #991b1b; }
+
+  /* ===== Ввод итоговой цены ===== */
+  .price-input-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .price-input-block .pib-label { font-size: 0.88rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .price-input-block .pib-hint { font-size: 0.78rem; color: #64748b; margin-bottom: 12px; }
+  .price-input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .price-input-row input[type="number"] {
+    flex: 1; min-width: 150px; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px;
+    font-size: 1.05rem; font-weight: 700; color: #1e293b; font-family: inherit;
+  }
+  .price-input-row input[type="number"]:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+  .price-input-row .currency { font-size: 0.9rem; color: #64748b; font-weight: 600; }
+
+  /* ===== Кнопка проверки и фидбек ===== */
+  .check-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 10px; background: #dc2626; color: white;
+    font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.15s; font-family: inherit;
+  }
+  .check-btn:active { transform: scale(0.99); }
+  .check-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+  .check-btn.retry { background: #475569; }
+
+  .round-feedback { display: none; margin-top: 16px; border-radius: 12px; padding: 16px; }
+  .round-feedback.show { display: block; }
+  .round-feedback .rf-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 6px; }
+  .round-feedback .rf-detail { font-size: 0.85rem; line-height: 1.55; }
+  .round-feedback.win { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .round-feedback.win .rf-title { color: #166534; }
+  .round-feedback.win .rf-detail { color: #14532d; }
+  .round-feedback.lose { background: #fef2f2; border: 1px solid #fecaca; }
+  .round-feedback.lose .rf-title { color: #991b1b; }
+  .round-feedback.lose .rf-detail { color: #7f1d1d; }
+
+  .next-round-btn {
+    display: none; width: 100%; padding: 14px; border: none; border-radius: 10px; background: #16a34a; color: white;
+    font-size: 1rem; font-weight: 800; cursor: pointer; margin-top: 12px; font-family: inherit;
+  }
+  .next-round-btn.show { display: block; }
+
+  .locked-overlay {
+    display: none; align-items: center; justify-content: center; text-align: center;
+    padding: 60px 20px; color: #94a3b8; font-size: 0.95rem; font-weight: 600;
+  }
+  .locked-overlay.show { display: flex; flex-direction: column; gap: 8px; }
+  .locked-overlay .lock-icon { font-size: 2.4rem; }
+
+  /* ===== Финальный экран ===== */
+  .final-screen { display: none; }
+  .final-screen.show { display: block; }
+  .final-banner {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; border-radius: 16px;
+    padding: 28px 22px; text-align: center; margin-bottom: 18px;
+  }
+  .final-banner .ficon { font-size: 2.6rem; margin-bottom: 8px; }
+  .final-banner h2 { font-size: 1.4rem; margin-bottom: 8px; }
+  .final-banner .fscore { font-size: 2.2rem; font-weight: 900; margin: 10px 0; }
+  .final-banner .fverdict { font-size: 0.95rem; opacity: 0.95; max-width: 480px; margin: 0 auto; line-height: 1.5; }
+
+  /* ===== CTA блок продажи ===== */
+  .cta-block {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 16px; padding: 26px 22px;
+    color: white; text-align: center; margin-bottom: 16px;
+  }
+  .cta-block .cta-eyebrow { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #fbbf24; margin-bottom: 10px; }
+  .cta-block h3 { font-size: 1.3rem; margin-bottom: 12px; line-height: 1.35; }
+  .cta-block p { font-size: 0.9rem; opacity: 0.85; margin-bottom: 18px; line-height: 1.6; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .cta-block .cta-features { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: left; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .cta-block .cta-features .cf { display: flex; gap: 8px; font-size: 0.85rem; align-items: flex-start; }
+  .cta-block .cta-features .cf .ci { color: #22c55e; font-weight: 900; flex-shrink: 0; }
+  .cta-button {
+    display: inline-block; background: #fbbf24; color: #78350f; font-weight: 800; text-decoration: none;
+    padding: 14px 32px; border-radius: 8px; font-size: 1rem; transition: 0.15s;
+  }
+  .cta-button:active { transform: scale(0.98); }
+  .cta-subtext { font-size: 0.74rem; color: #94a3b8; margin-top: 12px; }
+
+  .replay-btn {
+    display: block; width: 100%; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 10px;
+    background: white; color: #475569; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+
+  footer { text-align: center; padding: 18px; color: #94a3b8; font-size: 0.8rem; }
+
+  @media (min-width: 600px) {
+    body { padding: 24px; }
+    .round-body { padding: 26px; }
+    header h1 { font-size: 1.7rem; }
+    .kp-card .kp-top { align-items: center; }
+  }
+</style>
+</head>
+<body>
+<div class="container" id="top">
+
+<header>
+  <span class="badge">🎯 Симулятор снабженца</span>
+  <h1>Симулятор КАЦ</h1>
+  <p>Сможете собрать конъюнктурный анализ цен без ошибок? Экспертиза не прощает невнимательности.</p>
+</header>
+
+<div class="game-score">
+  <div>
+    <div class="label">Прогресс игры</div>
+    <div class="value" id="overall-score">0 / 3 раунда</div>
+  </div>
+  <div class="round-pills">
+    <div class="round-pill active" id="pill-1">1</div>
+    <div class="round-pill" id="pill-2">2</div>
+    <div class="round-pill" id="pill-3">3</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- РАУНД 1: ДЕТСКАЯ ВЕРАНДА -->
+<!-- ============================================================ -->
+<div class="round" id="round-1">
+  <div class="round-head">
+    <div class="rlabel">Раунд 1 из 3</div>
+    <h2>🏠 Позиция: Детская веранда</h2>
+    <p class="rsub">Объект: детский сад, г. Уссурийск. Нужно 3 корректных КП для конъюнктурного анализа.</p>
+  </div>
+  <div class="round-body">
+    <div class="round-instruction">
+      <b>Задание:</b> выберите кликом 3 коммерческих предложения, которые пропустит Главгосэкспертиза. Остальные 2 содержат нарушения — проверяйте реквизиты, доставку и сроки внимательно.
+    </div>
+
+    <div class="kp-grid" data-round="1">
+      <div class="kp-card" data-kp="r1k1" data-correct="true">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «СтройМАФ-ДВ»</div>
+          <div class="kp-price">412 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2536184720 / 253601001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>14.05.2026, подпись и печать на бланке</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>включена, до объекта в Уссурийске</span></div>
+          <div class="row"><span class="k">Срок изготовления:</span><span>20 рабочих дней</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r1k2" data-correct="false">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ИП Кузнецов А.В.</div>
+          <div class="kp-price">365 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">ИНН/КПП:</span><span>не указан</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>скан без подписи, печати нет</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>включена</span></div>
+          <div class="row"><span class="k">Срок изготовления:</span><span>15 рабочих дней</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r1k3" data-correct="true">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «Игропром Сибирь»</div>
+          <div class="kp-price">398 500 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">ИНН/КПП:</span><span>5406801234 / 540601001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>16.05.2026, подпись и печать на бланке</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>включена, до объекта в Уссурийске</span></div>
+          <div class="row"><span class="k">Срок изготовления:</span><span>25 рабочих дней</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r1k4" data-correct="false">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «Москва-Игра»</div>
+          <div class="kp-price">350 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">ИНН/КПП:</span><span>7701234567 / 770101001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>10.05.2026, подпись и печать на бланке</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>цена со склада в Москве (EXW), доставку оплачивает покупатель отдельно</span></div>
+          <div class="row"><span class="k">Срок изготовления:</span><span>45 рабочих дней</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r1k5" data-correct="true">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «ДальДетПлощадка»</div>
+          <div class="kp-price">429 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2538097654 / 253801001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>13.05.2026, подпись и печать на бланке</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>включена, до объекта в Уссурийске</span></div>
+          <div class="row"><span class="k">Срок изготовления:</span><span>18 рабочих дней</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+    </div>
+
+    <div class="price-input-block">
+      <div class="pib-label">Итоговая цена для сметы (среднее по 3 выбранным КП, без НДС)</div>
+      <div class="pib-hint">Все цены в КП уже указаны без НДС. Посчитайте среднее арифметическое трёх выбранных вами предложений и впишите результат.</div>
+      <div class="price-input-row">
+        <input type="number" id="r1-price-input" placeholder="Например: 413166">
+        <span class="currency">₽</span>
+      </div>
+    </div>
+
+    <button class="check-btn" id="r1-check-btn" disabled>Выберите 3 КП и впишите цену</button>
+
+    <div class="round-feedback" id="r1-feedback">
+      <div class="rf-title"></div>
+      <div class="rf-detail"></div>
+    </div>
+
+    <button class="next-round-btn" id="r1-next-btn">Перейти к раунду 2 →</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- РАУНД 2: АРМАТУРА А500С -->
+<!-- ============================================================ -->
+<div class="round" id="round-2" style="display:none;">
+  <div class="round-head">
+    <div class="rlabel">Раунд 2 из 3</div>
+    <h2>🔩 Позиция: Арматура А500С Ø12, 15 тонн</h2>
+    <p class="rsub">Объект: ЖК «Северный», г. Хабаровск. Нужно 3 корректных КП для конъюнктурного анализа.</p>
+  </div>
+  <div class="round-body">
+    <div class="round-instruction">
+      <b>Задание:</b> в этом раунде проверяйте НДС, сертификаты соответствия и даты КП — именно здесь чаще всего ошибаются снабженцы.
+    </div>
+
+    <div class="kp-grid" data-round="2">
+      <div class="kp-card" data-kp="r2k1" data-correct="true">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «МеталлТорг ДВ»</div>
+          <div class="kp-price">915 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>без НДС, сертификат соответствия приложен</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2722098765 / 272201001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>02.06.2026, подпись и печать</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>включена до объекта</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r2k2" data-correct="false">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ИП Воронов С.П.</div>
+          <div class="kp-price">870 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>«примерно 870 000», точная дата КП не указана</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>270512345678</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>не указана — "цена актуальна сейчас"</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>включена</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r2k3" data-correct="true">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «АрмаСнаб»</div>
+          <div class="kp-price">932 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>без НДС, сертификат соответствия приложен</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2536145897 / 253601001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>03.06.2026, подпись и печать</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>включена до объекта</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r2k4" data-correct="false">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «ЭкономСталь»</div>
+          <div class="kp-price">812 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>«820 000 с НДС» — указана с НДС, а не без</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>7814056789 / 781401001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>01.06.2026, подпись и печать</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>включена до объекта</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r2k5" data-correct="true">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «ДВ-Прокат»</div>
+          <div class="kp-price">901 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>без НДС, сертификат соответствия приложен</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2540187654 / 254001001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>04.06.2026, подпись и печать</span></div>
+          <div class="row"><span class="k">Доставка:</span><span>включена до объекта</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+    </div>
+
+    <div class="price-input-block">
+      <div class="pib-label">Итоговая цена для сметы (среднее по 3 выбранным КП, без НДС)</div>
+      <div class="pib-hint">Внимание: одно из КП в списке указано с НДС, а не без — для расчёта среднего такая позиция не годится, даже если вы её не выберете.</div>
+      <div class="price-input-row">
+        <input type="number" id="r2-price-input" placeholder="Например: 916000">
+        <span class="currency">₽</span>
+      </div>
+    </div>
+
+    <button class="check-btn" id="r2-check-btn" disabled>Выберите 3 КП и впишите цену</button>
+
+    <div class="round-feedback" id="r2-feedback">
+      <div class="rf-title"></div>
+      <div class="rf-detail"></div>
+    </div>
+
+    <button class="next-round-btn" id="r2-next-btn">Перейти к раунду 3 →</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- РАУНД 3: БЕТОН М300 -->
+<!-- ============================================================ -->
+<div class="round" id="round-3" style="display:none;">
+  <div class="round-head">
+    <div class="rlabel">Раунд 3 из 3</div>
+    <h2>🧱 Позиция: Бетон М300, 80 м³ с доставкой</h2>
+    <p class="rsub">Объект: фундамент, г. Артём. Заливка через 5 дней — срок критичен. Нужно 3 корректных КП.</p>
+  </div>
+  <div class="round-body">
+    <div class="round-instruction">
+      <b>Задание:</b> здесь проверяйте сроки поставки относительно дедлайна заливки и полноту цены — забытая автобетононасосная установка (перекачка) часто превращается в неприятный сюрприз.
+    </div>
+
+    <div class="kp-grid" data-round="3">
+      <div class="kp-card" data-kp="r3k1" data-correct="true">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «БетонСервис Артём»</div>
+          <div class="kp-price">488 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>без НДС, включает миксеры и перекачку</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2511087654 / 251101001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>15.06.2026, подпись и печать</span></div>
+          <div class="row"><span class="k">Срок поставки:</span><span>готовность через 2 дня</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r3k2" data-correct="false">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «БетонЭконом»</div>
+          <div class="kp-price">452 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>без НДС, миксеры включены, перекачка НЕ включена и оплачивается отдельно</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2536154321 / 253601001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>14.06.2026, подпись и печать</span></div>
+          <div class="row"><span class="k">Срок поставки:</span><span>готовность через 3 дня</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r3k3" data-correct="true">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «ДВ-Бетон Юг»</div>
+          <div class="kp-price">495 500 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>без НДС, включает миксеры и перекачку</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2538076543 / 253801001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>15.06.2026, подпись и печать</span></div>
+          <div class="row"><span class="k">Срок поставки:</span><span>готовность через 1 день</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r3k4" data-correct="false">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «КрупноБетонСтрой»</div>
+          <div class="kp-price">470 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>без НДС, включает миксеры и перекачку</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2540198765 / 254001001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>13.06.2026, подпись и печать</span></div>
+          <div class="row"><span class="k">Срок поставки:</span><span>готовность через 9 дней — производство загружено</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+
+      <div class="kp-card" data-kp="r3k5" data-correct="true">
+        <div class="checkbox-indicator"></div>
+        <div class="kp-top">
+          <div class="kp-supplier">ООО «Приморбетон»</div>
+          <div class="kp-price">501 000 ₽</div>
+        </div>
+        <div class="kp-details">
+          <div class="row"><span class="k">Цена:</span><span>без НДС, включает миксеры и перекачку</span></div>
+          <div class="row"><span class="k">ИНН/КПП:</span><span>2509087654 / 250901001</span></div>
+          <div class="row"><span class="k">Дата КП:</span><span>16.06.2026, подпись и печать</span></div>
+          <div class="row"><span class="k">Срок поставки:</span><span>готовность через 2 дня</span></div>
+        </div>
+        <div class="verdict-tag"></div>
+      </div>
+    </div>
+
+    <div class="price-input-block">
+      <div class="pib-label">Итоговая цена для сметы (среднее по 3 выбранным КП, без НДС)</div>
+      <div class="pib-hint">Заливка через 5 дней — учитывайте, что КП со сроком готовности больше 5 дней физически не успеет на объект, даже если цена привлекательная.</div>
+      <div class="price-input-row">
+        <input type="number" id="r3-price-input" placeholder="Например: 494833">
+        <span class="currency">₽</span>
+      </div>
+    </div>
+
+    <button class="check-btn" id="r3-check-btn" disabled>Выберите 3 КП и впишите цену</button>
+
+    <div class="round-feedback" id="r3-feedback">
+      <div class="rf-title"></div>
+      <div class="rf-detail"></div>
+    </div>
+
+    <button class="next-round-btn" id="r3-next-btn">Завершить игру →</button>
+  </div>
+</div>
+
+<!-- ROUNDS PLACEHOLDER -->
+
+
+
+
+<!-- ============================================================ -->
+<!-- ФИНАЛЬНЫЙ ЭКРАН -->
+<!-- ============================================================ -->
+<div class="final-screen" id="final-screen">
+
+  <div class="final-banner">
+    <div class="ficon" id="final-icon">🏆</div>
+    <h2>Игра завершена!</h2>
+    <div class="fscore" id="final-score">0 / 3</div>
+    <div class="fverdict" id="final-verdict">Вы прошли все 3 раунда симулятора КАЦ.</div>
+  </div>
+
+  <div class="cta-block">
+    <div class="cta-eyebrow">А теперь — без ошибок и в 10 раз быстрее</div>
+    <h3>Устали собирать КАЦ вручную и допускать такие ошибки?</h3>
+    <p>В реальной работе на кону не баллы в игре, а часы рабочего времени и реальные деньги компании. Наша ERP-система берёт эту рутину на себя.</p>
+    <div class="cta-features">
+      <div class="cf"><span class="ci">✓</span><span>Собирает 3 КП от проверенных поставщиков автоматически</span></div>
+      <div class="cf"><span class="ci">✓</span><span>Проверяет ИНН и реквизиты контрагента перед отправкой в смету</span></div>
+      <div class="cf"><span class="ci">✓</span><span>Считает среднюю цену без НДС в один клик, без ручных расчётов</span></div>
+      <div class="cf"><span class="ci">✓</span><span>Подсвечивает риски по срокам и логистике до того, как вы подписали КП</span></div>
+    </div>
+    <a href="https://example.com" target="_blank" class="cta-button">Попробовать демо ERP-системы</a>
+    <div class="cta-subtext">Бесплатное демо · без привязки карты</div>
+  </div>
+
+  <button class="replay-btn" id="replay-btn">↻ Пройти симулятор заново</button>
+
+</div>
+
+<!-- FINAL SCREEN PLACEHOLDER -->
+
+
+<footer><p>Симулятор КАЦ · тренажёр для снабженцев и сметчиков</p></footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var ROUNDS = [
+    { id: 1, correctSum: 412000 + 398500 + 429000, tolerance: 3000 },
+    { id: 2, correctSum: 915000 + 932000 + 901000, tolerance: 3000 },
+    { id: 3, correctSum: 488000 + 495500 + 501000, tolerance: 3000 }
+  ];
+
+  var roundResults = { 1: null, 2: null, 3: null }; // null = not done, true/false = win/lose
+  var currentRound = 1;
+
+  function $(sel, ctx) { return (ctx || document).querySelector(sel); }
+  function $all(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
+
+  function initRound(roundNum) {
+    var roundEl = $("#round-" + roundNum);
+    var grid = $('.kp-grid[data-round="' + roundNum + '"]');
+    var cards = $all(".kp-card", grid);
+    var checkBtn = $("#r" + roundNum + "-check-btn");
+    var priceInput = $("#r" + roundNum + "-price-input");
+    var feedback = $("#r" + roundNum + "-feedback");
+    var nextBtn = $("#r" + roundNum + "-next-btn");
+    var locked = false;
+
+    function selectedCards() {
+      return cards.filter(function (c) { return c.classList.contains("selected"); });
+    }
+
+    function refreshCheckBtn() {
+      var sel = selectedCards();
+      var priceVal = parseFloat(priceInput.value);
+      var ready = sel.length === 3 && !isNaN(priceVal) && priceVal > 0;
+      checkBtn.disabled = !ready || locked;
+      if (locked) return;
+      if (sel.length < 3) {
+        checkBtn.textContent = "Выберите ещё " + (3 - sel.length) + " КП";
+      } else if (sel.length > 3) {
+        checkBtn.textContent = "Снимите лишний выбор (выбрано " + sel.length + ")";
+      } else if (isNaN(priceVal) || priceVal <= 0) {
+        checkBtn.textContent = "Впишите итоговую цену";
+      } else {
+        checkBtn.textContent = "Проверить КАЦ";
+      }
+    }
+
+    cards.forEach(function (card) {
+      card.addEventListener("click", function () {
+        if (locked) return;
+        var sel = selectedCards();
+        if (card.classList.contains("selected")) {
+          card.classList.remove("selected");
+        } else {
+          if (sel.length >= 3) return; // max 3
+          card.classList.add("selected");
+        }
+        refreshCheckBtn();
+      });
+    });
+
+    priceInput.addEventListener("input", refreshCheckBtn);
+
+    checkBtn.addEventListener("click", function () {
+      if (locked) return;
+      var sel = selectedCards();
+      if (sel.length !== 3) return;
+      var priceVal = parseFloat(priceInput.value);
+      if (isNaN(priceVal) || priceVal <= 0) return;
+
+      locked = true;
+      var roundData = ROUNDS[roundNum - 1];
+      var correctAvg = roundData.correctSum / 3;
+
+      // Reveal verdicts on all cards
+      var allCorrectSelected = true;
+      cards.forEach(function (card) {
+        var isCorrect = card.dataset.correct === "true";
+        var isSelected = card.classList.contains("selected");
+        card.classList.add("revealed");
+        var tag = $(".verdict-tag", card);
+        if (isSelected && isCorrect) {
+          card.classList.add("correct");
+          tag.textContent = "✓ Принято: реквизиты и условия в порядке";
+        } else if (isSelected && !isCorrect) {
+          card.classList.add("wrong");
+          allCorrectSelected = false;
+          tag.textContent = "✗ Экспертиза отклонит: " + getTrapReason(card.dataset.kp);
+        } else if (!isSelected && isCorrect) {
+          card.classList.add("wrong");
+          tag.textContent = "⚠ Это КП стоило взять — оно было корректным";
+        } else {
+          tag.textContent = "Корректно отклонено вами";
+        }
+      });
+
+      var priceDiff = Math.abs(priceVal - correctAvg);
+      var priceOk = priceDiff <= roundData.tolerance;
+
+      var roundWin = allCorrectSelected && priceOk;
+      roundResults[roundNum] = roundWin;
+
+      feedback.classList.add("show");
+      feedback.classList.add(roundWin ? "win" : "lose");
+      var title = $(".rf-title", feedback);
+      var detail = $(".rf-detail", feedback);
+
+      if (roundWin) {
+        title.textContent = "✓ Раунд пройден!";
+        detail.innerHTML = "Вы выбрали все 3 корректных КП и верно посчитали среднюю цену (" +
+          Math.round(correctAvg).toLocaleString("ru-RU") + " ₽ без НДС). Именно так должен выглядеть КАЦ, который пропустит экспертиза.";
+      } else {
+        title.textContent = "✗ В этом раунде есть ошибки";
+        var issues = [];
+        if (!allCorrectSelected) issues.push("выбор КП содержит позицию(и) с нарушением или пропущено корректное КП");
+        if (!priceOk) issues.push("итоговая цена отличается от верной (" + Math.round(correctAvg).toLocaleString("ru-RU") + " ₽) больше чем на " + roundData.tolerance.toLocaleString("ru-RU") + " ₽");
+        detail.innerHTML = "Посмотрите пометки на карточках выше — там указано, что именно не так. Ошибки: " + issues.join("; ") + ".";
+      }
+
+      nextBtn.classList.add("show");
+      updatePills();
+    });
+
+    refreshCheckBtn();
+  }
+
+  function getTrapReason(kpId) {
+    var reasons = {
+      "r1k2": "нет ИНН и подписи на КП — документ юридически ничтожен",
+      "r1k4": "цена указана без доставки до объекта (EXW Москва) — итоговая стоимость будет выше",
+      "r2k2": "нет даты КП и точной цены — формально документ нельзя использовать как основание",
+      "r2k4": "цена указана с НДС, а не без — нельзя сравнивать напрямую с остальными КП",
+      "r3k2": "в цену не включена перекачка (автобетононасос) — появится доплата при заливке",
+      "r3k4": "срок готовности (9 дней) больше срока до заливки (5 дней) — поставщик физически не успеет"
+    };
+    return reasons[kpId] || "нарушение условий КАЦ";
+  }
+
+  function updatePills() {
+    [1, 2, 3].forEach(function (n) {
+      var pill = $("#pill-" + n);
+      pill.classList.remove("active", "done");
+      if (roundResults[n] !== null) {
+        pill.classList.add("done");
+      } else if (n === currentRound) {
+        pill.classList.add("active");
+      }
+    });
+    var doneCount = [1, 2, 3].filter(function (n) { return roundResults[n] !== null; }).length;
+    $("#overall-score").textContent = doneCount + " / 3 раунда";
+  }
+
+  function goToRound(n) {
+    [1, 2, 3].forEach(function (i) {
+      $("#round-" + i).style.display = i === n ? "block" : "none";
+    });
+    currentRound = n;
+    updatePills();
+    window.scrollTo({ top: $("#round-" + n).getBoundingClientRect().top + window.scrollY - 12, behavior: "smooth" });
+  }
+
+  function showFinalScreen() {
+    [1, 2, 3].forEach(function (i) { $("#round-" + i).style.display = "none"; });
+    $("#final-screen").classList.add("show");
+
+    var wins = [1, 2, 3].filter(function (n) { return roundResults[n] === true; }).length;
+    $("#final-score").textContent = wins + " / 3";
+
+    var icon = $("#final-icon");
+    var verdict = $("#final-verdict");
+    if (wins === 3) {
+      icon.textContent = "🏆";
+      verdict.textContent = "Идеальный результат! В реальной работе именно такая внимательность экономит компании сотни тысяч рублей на каждом объекте.";
+    } else if (wins === 2) {
+      icon.textContent = "👍";
+      verdict.textContent = "Неплохо! Но даже одна ошибка в КАЦ на реальном объекте — это риск штрафа за простой или переплата за логистику.";
+    } else if (wins === 1) {
+      icon.textContent = "😅";
+      verdict.textContent = "КАЦ — это минное поле деталей: НДС, сроки, доставка, реквизиты. Легко ошибиться, считая вручную.";
+    } else {
+      icon.textContent = "🤯";
+      verdict.textContent = "Именно поэтому ручной сбор КАЦ — главная боль снабженцев. Слишком много деталей, чтобы держать их в голове одновременно.";
+    }
+
+    updatePills();
+    window.scrollTo({ top: $("#final-screen").getBoundingClientRect().top + window.scrollY - 12, behavior: "smooth" });
+  }
+
+  $("#r1-next-btn").addEventListener("click", function () { goToRound(2); });
+  $("#r2-next-btn").addEventListener("click", function () { goToRound(3); });
+  $("#r3-next-btn").addEventListener("click", function () { showFinalScreen(); });
+
+  $("#replay-btn").addEventListener("click", function () {
+    window.location.reload();
+  });
+
+  initRound(1);
+  initRound(2);
+  initRound(3);
+  updatePills();
+})();
+
+</script>
+</body>
+</html>
