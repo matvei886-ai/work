@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тренажёр Снабженца | Полный курс</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: #f4f7f6;
+    color: #1e293b;
+    padding: 12px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  .container { max-width: 880px; margin: 0 auto; }
+
+  /* ===== Шапка ===== */
+  header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    color: #ffffff;
+    padding: 22px 18px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+  }
+  header h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; line-height: 1.3; }
+  header p  { font-size: 0.9rem; opacity: 0.9; }
+  header .tip { margin-top: 12px; font-size: 0.8rem; background: rgba(255,255,255,0.15); padding: 10px 12px; border-radius: 8px; font-weight: 500; }
+
+  /* ===== Прогресс-бар курса ===== */
+  .course-progress { background: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .course-progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .course-progress-top .label { font-size: 0.82rem; font-weight: 700; color: #1e3a8a; }
+  .course-progress-top .count { font-size: 0.78rem; color: #64748b; }
+  .progress-track { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #22c55e); border-radius: 4px; width: 0%; transition: width 0.4s ease; }
+
+  /* ===== Навигация по модулям (вкладки) ===== */
+  .module-nav { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .module-nav::-webkit-scrollbar { display: none; }
+  .module-nav a {
+    flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+    background: white; border: 1.5px solid #cbd5e1; color: #475569;
+    padding: 9px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700;
+    text-decoration: none; white-space: nowrap; transition: 0.15s;
+  }
+  .module-nav a .mnum { background: #cbd5e1; color: white; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem; flex-shrink: 0; }
+  .module-nav a.exam { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+  .module-nav a.exam .mnum { background: #f59e0b; }
+
+  /* ===== Секции / модули ===== */
+  .module { background: white; border-radius: 14px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); overflow: hidden; scroll-margin-top: 14px; }
+  .module-head { padding: 18px 20px; border-bottom: 1px solid #f1f5f9; }
+  .module-head .mlabel { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #2563eb; margin-bottom: 4px; }
+  .module-head h2 { font-size: 1.25rem; color: #0f172a; line-height: 1.3; }
+  .module-head .msub { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+  .module-body { padding: 20px; }
+
+  section.sub { margin-bottom: 22px; }
+  section.sub:last-child { margin-bottom: 0; }
+  h3.sub-title { color: #1e3a8a; font-size: 1.02rem; margin-bottom: 6px; line-height: 1.3; display: flex; align-items: center; gap: 8px; }
+  .nb { background: #f59e0b; color: white; width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: bold; flex-shrink: 0; }
+  .instruction { color: #64748b; font-size: 0.85rem; margin-bottom: 14px; font-style: italic; }
+
+  /* ===== Словарь ===== */
+  .vgroup { margin-bottom: 16px; }
+  .vgroup-title { font-size: 0.85rem; font-weight: 700; color: white; padding: 6px 12px; border-radius: 6px; margin-bottom: 10px; display: inline-block; background: #475569; }
+  .vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .vc { background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0;}
+  .vc .slang { font-size: 1.05rem; font-weight: bold; color: #0f172a; margin-bottom: 4px; }
+  .vc .fsnb  { font-size: 0.8rem; color: #2563eb; font-weight: 600; line-height: 1.2; margin-bottom: 4px; }
+  .vc .unit  { font-size: 0.75rem; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+
+  /* ===== Правда/Ложь ===== */
+  .q { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; }
+  .q-text { font-weight: 600; font-size: 1rem; margin-bottom: 12px; line-height: 1.4; color: #1e293b; }
+  .opt-input { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+  .tf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 320px; }
+  .opt {
+    display: flex; align-items: center; justify-content: center;
+    background: white; border: 2px solid #cbd5e1;
+    padding: 10px; border-radius: 6px;
+    font-size: 0.95rem; font-weight: 600; text-align: center;
+    cursor: pointer; user-select: none; transition: 0.2s;
+  }
+  .opt:active { transform: scale(0.98); }
+  .opt-input.ok:checked + .opt { background: #dcfce7; border-color: #22c55e; color: #166534; }
+  .opt-input.ok:checked + .opt::after { content: " ✓"; }
+  .opt-input.no:checked + .opt { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .opt-input.no:checked + .opt::after { content: " ✗"; }
+  .hint-box { display: none; margin-top: 12px; padding: 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; line-height: 1.4; }
+  .opt-input.ok:checked ~ .hint-box.success { display: block; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .opt-input.no:checked ~ .hint-box.error { display: block; background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+  /* ===== Кейсы с подвохами ===== */
+  .fib { background: #fffbeb; padding: 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.95rem; line-height: 1.5; border: 1px solid #fde68a; }
+  .fib .task-title { font-weight: bold; color: #92400e; margin-bottom: 8px; }
+  .fib .doc-snippet { font-family: monospace; background: #fef3c7; padding: 10px; border-left: 3px solid #f59e0b; margin-bottom: 12px; font-size: 0.9rem; color: #52525b; }
+  details.ans { margin-top: 12px; border-radius: 6px; border: 1px solid #cbd5e1; overflow: hidden; }
+  details.ans summary { cursor: pointer; padding: 12px 16px; font-size: 0.9rem; font-weight: 600; color: #2563eb; list-style: none; user-select: none; background: #f8fafc; }
+  details.ans summary::before { content: "👁 Показать разбор ошибки"; }
+  details.ans[open] summary::before { content: "🙈 Скрыть разбор"; }
+  details.ans summary::-webkit-details-marker { display: none; }
+  details.ans .body { padding: 14px 16px; font-size: 0.9rem; color: #1e293b; background: white; border-top: 1px solid #cbd5e1; line-height: 1.6; }
+  details.ans .body .h  { font-weight: bold; color: #ef4444; margin-bottom: 4px; display: block; }
+  details.ans .body .p  { color: #334155; }
+
+  /* ===== Множественный выбор (для экзамена и доп. заданий) ===== */
+  .mc-row { display: flex; flex-direction: column; gap: 8px; max-width: 480px; }
+  .mc-opt {
+    display: flex; align-items: center; gap: 10px;
+    background: white; border: 2px solid #cbd5e1; padding: 11px 14px; border-radius: 8px;
+    font-size: 0.92rem; font-weight: 500; cursor: pointer; user-select: none; transition: 0.2s;
+  }
+  .mc-opt:active { transform: scale(0.99); }
+  .mc-opt .bullet { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #cbd5e1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; font-weight: 800; }
+  .opt-input.ok:checked + .mc-opt { background: #dcfce7; border-color: #22c55e; color: #166534; }
+  .opt-input.ok:checked + .mc-opt .bullet { background: #22c55e; border-color: #22c55e; }
+  .opt-input.ok:checked + .mc-opt .bullet::after { content: "✓"; }
+  .opt-input.no:checked + .mc-opt { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+  .opt-input.no:checked + .mc-opt .bullet { background: #ef4444; border-color: #ef4444; }
+  .opt-input.no:checked + .mc-opt .bullet::after { content: "✗"; }
+
+  /* ===== Финальный экзамен: счётчик результата ===== */
+  .exam-banner { background: linear-gradient(135deg, #92400e 0%, #f59e0b 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 18px; }
+  .exam-banner h2 { font-size: 1.3rem; margin-bottom: 6px; }
+  .exam-banner p { font-size: 0.88rem; opacity: 0.95; }
+  .exam-q-num { display: inline-block; background: #1e3a8a; color: white; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; margin-bottom: 10px; }
+
+  /* ===== Подвал / CTA ===== */
+  footer { text-align: center; padding: 20px; color: #64748b; font-size: 0.85rem; }
+  .cta-footer { margin-top: 20px; padding: 20px; background: #1e3a8a; border-radius: 12px; color: white; text-align: center; }
+  .cta-footer h3 { margin-bottom: 10px; }
+  .cta-footer a { display: inline-block; background: #f59e0b; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; margin-top: 10px; }
+
+  /* ===== Кнопка "наверх к навигации" ===== */
+  .back-to-nav { display: inline-block; margin-top: 14px; font-size: 0.8rem; color: #2563eb; text-decoration: none; font-weight: 600; }
+
+  @media (min-width: 600px) {
+    body { padding: 24px; }
+    .module-body { padding: 26px; }
+    header h1 { font-size: 1.7rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container" id="top">
+
+<header>
+  <h1>🏗️ Тренажёр Снабженца</h1>
+  <p>Полный курс: КАЦ, логистика, договоры, складской учёт</p>
+  <div class="tip">💡 Как проходить: открывайте модули по порядку, нажимайте варианты ответа — тренажёр сразу покажет ошибки и даст разбор. В конце — финальный экзамен по всем темам.</div>
+</header>
+
+<div class="course-progress">
+  <div class="course-progress-top">
+    <span class="label">Прогресс курса</span>
+    <span class="count">4 модуля + финальный экзамен</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" style="width: 0%;"></div></div>
+</div>
+
+<nav class="module-nav">
+  <a href="#module-1"><span class="mnum">1</span> КАЦ и сметы</a>
+  <a href="#module-2"><span class="mnum">2</span> Логистика</a>
+  <a href="#module-3"><span class="mnum">3</span> Договоры и риски</a>
+  <a href="#module-4"><span class="mnum">4</span> Склад и приёмка</a>
+  <a href="#exam" class="exam"><span class="mnum">★</span> Экзамен</a>
+</nav>
+
+<!-- ============================================================ -->
+<!-- МОДУЛЬ 1: КАЦ и чтение смет -->
+<!-- ============================================================ -->
+<div class="module" id="module-1">
+  <div class="module-head">
+    <div class="mlabel">Модуль 1 из 4</div>
+    <h2>📋 КАЦ и чтение смет</h2>
+    <p class="msub">Сленг прорабов, требования к коммерческим предложениям, поиск скрытых рисков в документах</p>
+  </div>
+  <div class="module-body">
+
+    <!-- 1.1 Словарь -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">1</span> Переводчик: со стройки на русский</h3>
+      <p class="instruction">Изучите термины. Прорабы говорят на сленге, но в 1С и ERP мы заводим официальные названия.</p>
+
+      <div class="vgroup">
+        <div class="vgroup-title">Общестрой и материалы</div>
+        <div class="vocab-grid">
+          <div class="vc"><div class="slang">Чекушка</div><div class="fsnb">Кирпич 3/4 (трехчетвертной)</div><div class="unit">Ед: шт</div></div>
+          <div class="vc"><div class="slang">ПГС</div><div class="fsnb">Смесь песчано-гравийная</div><div class="unit">Ед: м³</div></div>
+          <div class="vc"><div class="slang">Пенка</div><div class="fsnb">Пена монтажная полиуретановая</div><div class="unit">Ед: баллон / л</div></div>
+          <div class="vc"><div class="slang">Глухарь</div><div class="fsnb">Шуруп сантехнический (DIN 571)</div><div class="unit">Ед: шт / кг</div></div>
+          <div class="vc"><div class="slang">Шляпа / Грибок</div><div class="fsnb">Дюбель фасадный тарельчатый</div><div class="unit">Ед: шт</div></div>
+          <div class="vc"><div class="slang">Арматура-десятка</div><div class="fsnb">Сталь арматурная А500С Ø10 мм</div><div class="unit">Ед: т (тонна)</div></div>
+        </div>
+      </div>
+
+      <div class="vgroup">
+        <div class="vgroup-title">Документы и закупка</div>
+        <div class="vocab-grid">
+          <div class="vc"><div class="slang">КАЦ</div><div class="fsnb">Конъюнктурный анализ цен (сбор КП для сравнения)</div><div class="unit">Документ</div></div>
+          <div class="vc"><div class="slang">КП</div><div class="fsnb">Коммерческое предложение поставщика</div><div class="unit">Документ</div></div>
+          <div class="vc"><div class="slang">Закрывашки</div><div class="fsnb">Закрывающие документы (УПД, накладная, акт)</div><div class="unit">Документ</div></div>
+          <div class="vc"><div class="slang">Прайсовая позиция</div><div class="fsnb">Материал без расценки в ФСНБ — цена только по рынку</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Откатать смету</div><div class="fsnb">Пересчитать смету после замены позиций</div><div class="unit">—</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1.2 Правда/Ложь -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">2</span> Юридические ловушки (КАЦ)</h3>
+      <p class="instruction">Проверьте свои знания правил закупки. Нажмите «Верно» или «Неверно».</p>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «В коммерческом предложении (КП) для конъюнктурного анализа достаточно только печати организации. ИНН поставщика указывать не обязательно».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m1tf1" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m1tf1" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! Экспертиза завернёт такое КП. Согласно Методике Минстроя, ИНН, КПП, дата и адрес поставщика — обязательные реквизиты. Без ИНН документ юридически ничтожен.</div>
+          <div class="hint-box success">ПРАВИЛЬНО! Экспертиза требует жёсткой идентификации. ИНН, КПП, дата и адрес — обязательны, иначе проверяющий вычеркнет эту позицию из сметы.</div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «Конъюнктурный анализ цен (сбор 3-х КП) нужно делать абсолютно на все материалы в проекте, включая обычный песок и щебень».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m1tf2" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m1tf2" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! Базовые материалы (песок, бетон) берутся из базы ФСНБ. КАЦ делается только на уникальные «прайсовые» позиции, которых нет в справочниках (например, сложное оборудование или МАФы).</div>
+          <div class="hint-box success">ПРАВИЛЬНО! Вы экономите время. Базовые ресурсы оцениваются по ФГИС ЦС / ФСНБ. КАЦ собираем только на то, чего нет в базе государства.</div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «Если поставщик прислал КП без подписи и печати, но прайс совпадает с озвученной по телефону ценой — этого достаточно для сметчика».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m1tf3" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m1tf3" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! Устная договорённость и неподписанный файл не являются официальным документом. Экспертиза требует именно подписанное и заверенное печатью КП на фирменном бланке.</div>
+          <div class="hint-box success">ПРАВИЛЬНО! Только подписанное и заверенное печатью КП имеет юридическую силу для обоснования цены в смете.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1.3 Кейсы -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">3</span> Найди подвох в документах</h3>
+      <p class="instruction">Прочитайте реальные выдержки из счетов поставщиков и найдите скрытые риски.</p>
+
+      <div class="fib">
+        <div class="task-title">Кейс №1: Закупка арматуры и логистика</div>
+        <div class="doc-snippet">
+          "Счет №45 от 12 мая. Сталь арматурная 12мм — 20 тонн. <br>
+          Условия: Доставка до объекта (Уссурийск) включена в стоимость. Разгрузка товара осуществляется силами Покупателя. Нормативное время выгрузки — 2 часа. Простой ТС свыше норматива оплачивается по тарифу 3000 руб/час."
+        </div>
+        <p><strong>Вопрос:</strong> В чём главный риск для снабженца, если на стройплощадке на этот день не заказан башенный кран?</p>
+        <details class="ans"><summary></summary>
+          <div class="body">
+            <span class="h">Скрытая переплата за простой фуры (штраф)</span>
+            <span class="p">Разгрузить 20 тонн арматуры (длинномеры по 11.7 метров) руками грузчиков за 2 часа — физически невозможно. Без крана разгрузка займёт весь день (около 8-10 часов).
+            <br><br>
+            <strong>Итог:</strong> Компания заплатит скрытый штраф: 8 часов × 3000 руб = <strong>24 000 рублей убытка</strong>. Снабженец обязан был либо заказать автокран на объект к приезду фуры, либо требовать у поставщика доставку машиной с краном-манипулятором.</span>
+          </div>
+        </details>
+      </div>
+
+      <div class="fib">
+        <div class="task-title">Кейс №2: Закупка детских площадок (МАФ)</div>
+        <div class="doc-snippet">
+          "Коммерческое предложение. Игровой комплекс «Сказка» — 1 шт, 450 000 руб. <br>
+          Условия оплаты: 100% предоплата. Срок изготовления — 45 рабочих дней. Цена указана на складе Поставщика в г. Москва."
+        </div>
+        <p><strong>Вопрос:</strong> Сметчик требует от вас это КП для конъюнктурного анализа по объекту в Приморском крае. Что с ним не так?</p>
+        <details class="ans"><summary></summary>
+          <div class="body">
+            <span class="h">В цену не включена логистика через всю страну</span>
+            <span class="p">В КП указана цена «со склада в Москве» (EXW/FCA). Если сметчик заложит в бюджет проекта 450 000 руб., то когда дело дойдёт до закупки, доставка негабаритного груза из Москвы в Приморье обойдётся ещё в 150 000 – 200 000 руб.
+            <br><br>
+            <strong>Итог:</strong> Эти 200 тысяч станут чистым убытком компании. Снабженец обязан был запросить КП с формулировкой «Цена с учётом доставки до объекта в г. Уссурийск» или приложить отдельную справку от транспортной компании.</span>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <a class="back-to-nav" href="#top">↑ К списку модулей</a>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- МОДУЛЬ 2: Логистика и транспорт -->
+<!-- ============================================================ -->
+<div class="module" id="module-2">
+  <div class="module-head">
+    <div class="mlabel">Модуль 2 из 4</div>
+    <h2>🚛 Логистика и транспорт</h2>
+    <p class="msub">Условия поставки, тоннаж, негабарит, типичные ошибки в расчёте доставки</p>
+  </div>
+  <div class="module-body">
+
+    <!-- 2.1 Словарь -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">1</span> Термины логистики</h3>
+      <p class="instruction">Базовый словарь условий поставки и транспортных терминов.</p>
+
+      <div class="vgroup">
+        <div class="vgroup-title">Условия поставки (Инкотермс упрощённо)</div>
+        <div class="vocab-grid">
+          <div class="vc"><div class="slang">Самовывоз</div><div class="fsnb">EXW — забор груза со склада поставщика силами покупателя</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">До двери</div><div class="fsnb">DAP — доставка до объекта, разгрузка покупателем</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Под кран</div><div class="fsnb">Доставка машиной с манипулятором (КМУ) — разгрузка без привлечения техники заказчика</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Негабарит</div><div class="fsnb">Груз, превышающий стандартные габариты ТС — требует спецсогласования</div><div class="unit">—</div></div>
+        </div>
+      </div>
+
+      <div class="vgroup">
+        <div class="vgroup-title">Транспорт и тоннаж</div>
+        <div class="vocab-grid">
+          <div class="vc"><div class="slang">Фура / Длинномер</div><div class="fsnb">Седельный тягач с полуприцепом, до 20 тонн груза</div><div class="unit">Ед: т</div></div>
+          <div class="vc"><div class="slang">Бычок / Газон</div><div class="fsnb">Малотоннажный грузовик до 5 тонн (ГАЗон, Бычок)</div><div class="unit">Ед: т</div></div>
+          <div class="vc"><div class="slang">Манипулятор / Фишка</div><div class="fsnb">Грузовик с собственным крано-манипулятором (КМУ)</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Простой</div><div class="fsnb">Время сверх нормативной разгрузки, оплачивается отдельно</div><div class="unit">Ед: руб/час</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2.2 Правда/Ложь -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">2</span> Проверь себя: логистика</h3>
+      <p class="instruction">Нажмите «Верно» или «Неверно».</p>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «Если в КП указано "доставка включена в стоимость", уточнять условия разгрузки не нужно — это забота поставщика».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m2tf1" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m2tf1" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! «Доставка включена» почти всегда означает только довоз ДО объекта (DAP), а не разгрузку. Разгрузка силами покупателя — стандартное условие, которое легко упустить и потом заплатить штраф за простой.</div>
+          <div class="hint-box success">ПРАВИЛЬНО! «Доставка включена» — это только довоз. Кто разгружает, чьими силами и за чей счёт — отдельный пункт, который надо проверять всегда.</div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «Стандартная фура способна провезти груз длиной более 12 метров (например, арматуру 11.7 м) без специального согласования».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m2tf2" class="opt-input ok"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m2tf2" class="opt-input no"><span class="opt">Неверно</span></label>
+          <div class="hint-box success">ПРАВИЛЬНО! Длинномерная арматура 11.7 м укладывается в стандартный полуприцеп (13.6 м) без оформления негабарита — это частый случай, не путайте с реальным крупногабаритом (фермы, балки, ЖБИ-конструкции свыше 16-20 м).</div>
+          <div class="hint-box error">ОШИБКА! Арматура длиной 11.7 м укладывается в стандартный полуприцеп (13.6 м) и не требует спецсогласования. Негабарит начинается, когда груз длиннее кузова или шире/выше нормативов ТС.</div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «Норматив времени на разгрузку, указанный поставщиком в счёте (например, "2 часа"), — это формальность, на практике штраф за простой никогда не выставляют».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m2tf3" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m2tf3" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! Штраф за простой ТС — рабочая практика большинства транспортных компаний и поставщиков. Норматив в счёте — не формальность, а юридически значимое условие договора.</div>
+          <div class="hint-box success">ПРАВИЛЬНО! Простой выставляют регулярно, особенно при доставке сборными грузами или арендованным транспортом. Норматив времени нужно соотносить с реальными возможностями разгрузки на объекте.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2.3 Кейс -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">3</span> Найди подвох в документах</h3>
+      <p class="instruction">Реальная ситуация из практики снабжения.</p>
+
+      <div class="fib">
+        <div class="task-title">Кейс: Доставка плитки на объект без подъездных путей</div>
+        <div class="doc-snippet">
+          "КП №112. Плитка тротуарная — 800 м². Цена с доставкой до объекта (г. Артём, ул. Заводская). <br>
+          Транспорт: фура 20 тонн. Подъезд к складу временного хранения не указан в заявке."
+        </div>
+        <p><strong>Вопрос:</strong> Объект находится в стеснённой городской застройке, заезд фуры на участок невозможен. В чём риск, если снабженец не уточнил это заранее?</p>
+        <details class="ans"><summary></summary>
+          <div class="body">
+            <span class="h">Срыв доставки или дорогостоящая перегрузка на месте</span>
+            <span class="p">Если фура физически не может заехать на объект, у водителя два варианта: либо отказаться от разгрузки (и тогда оплаченная доставка пропадает, нужно заказывать новую — малотоннажный транспорт), либо требовать доплату за перегрузку с фуры на меньший борт прямо на месте, что часто оборачивается конфликтом и дополнительными расходами.
+            <br><br>
+            <strong>Итог:</strong> Снабженец обязан заранее уточнять у поставщика тип транспорта под габариты подъезда к объекту — фура, бычок или газель — и явно прописывать это в заявке на КП.</span>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <a class="back-to-nav" href="#top">↑ К списку модулей</a>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- МОДУЛЬ 3: Договоры и юридические риски -->
+<!-- ============================================================ -->
+<div class="module" id="module-3">
+  <div class="module-head">
+    <div class="mlabel">Модуль 3 из 4</div>
+    <h2>📑 Договоры и юридические риски</h2>
+    <p class="msub">Условия оплаты, штрафные санкции, типичные ловушки в договорах поставки</p>
+  </div>
+  <div class="module-body">
+
+    <!-- 3.1 Словарь -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">1</span> Договорные термины</h3>
+      <p class="instruction">Что реально стоит за формулировками в договоре поставки.</p>
+
+      <div class="vgroup">
+        <div class="vgroup-title">Условия оплаты</div>
+        <div class="vocab-grid">
+          <div class="vc"><div class="slang">Предоплата 100%</div><div class="fsnb">Полная оплата до начала производства / отгрузки</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Отсрочка</div><div class="fsnb">Оплата через N дней после поставки (риск кассового разрыва у поставщика)</div><div class="unit">Ед: дни</div></div>
+          <div class="vc"><div class="slang">Аванс 30/70</div><div class="fsnb">30% аванс на старт, 70% по факту поставки/приёмки</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Эскроу</div><div class="fsnb">Деньги хранятся у третьей стороны до выполнения условий</div><div class="unit">—</div></div>
+        </div>
+      </div>
+
+      <div class="vgroup">
+        <div class="vgroup-title">Риски и санкции</div>
+        <div class="vocab-grid">
+          <div class="vc"><div class="slang">Пеня</div><div class="fsnb">Штраф за просрочку поставки, обычно % от суммы в день</div><div class="unit">Ед: %/день</div></div>
+          <div class="vc"><div class="slang">Форс-мажор</div><div class="fsnb">Обстоятельства непреодолимой силы, освобождающие от ответственности</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Существенное условие</div><div class="fsnb">Условие договора, без которого он считается незаключённым</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Спецификация</div><div class="fsnb">Приложение к договору с точным перечнем и характеристиками товара</div><div class="unit">Документ</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3.2 Правда/Ложь -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">2</span> Проверь себя: договоры</h3>
+      <p class="instruction">Нажмите «Верно» или «Неверно».</p>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «Если в договоре не прописана пеня за просрочку поставки, взыскать неустойку с поставщика всё равно можно по умолчанию, без отдельного условия».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m3tf1" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m3tf1" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! Без прямого указания размера пени в договоре взыскать неустойку крайне сложно — придётся доказывать убытки через суд, что долго и не всегда успешно. Условие о пене нужно включать в договор заранее.</div>
+          <div class="hint-box success">ПРАВИЛЬНО! Без прописанной пени в договоре взыскание неустойки превращается в долгий судебный процесс с доказыванием реальных убытков. Условие о штрафных санкциях — то, что нужно согласовывать на этапе подписания.</div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «100% предоплата сама по себе — это всегда тревожный сигнал и признак мошенничества со стороны поставщика».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m3tf2" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m3tf2" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! 100% предоплата — стандартная практика для производства под заказ (МАФы, нестандартные металлоконструкции). Риск нужно оценивать не по факту предоплаты, а по репутации поставщика, юрлицу, отзывам и истории работы.</div>
+          <div class="hint-box success">ПРАВИЛЬНО! 100% предоплата — обычное условие для изготовления под заказ. Это не признак мошенничества само по себе, но требует дополнительной проверки контрагента: ЕГРЮЛ, судебные дела, отзывы.</div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «Спецификация (приложение к договору) важнее самого текста договора, если в них указаны разные характеристики товара».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m3tf3" class="opt-input ok"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m3tf3" class="opt-input no"><span class="opt">Неверно</span></label>
+          <div class="hint-box success">ПРАВИЛЬНО! Спецификация — это приложение, которое детализирует и дополняет договор, обычно именно она имеет приоритет по конкретным характеристикам товара. Поэтому проверять нужно в первую очередь её, а не общий текст договора.</div>
+          <div class="hint-box error">ОШИБКА! Именно спецификация содержит точный перечень и характеристики товара и на практике имеет приоритет при расхождениях с общими формулировками договора — её нужно проверять особенно внимательно.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3.3 Кейс -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">3</span> Найди подвох в документах</h3>
+      <p class="instruction">Реальная ситуация из практики снабжения.</p>
+
+      <div class="fib">
+        <div class="task-title">Кейс: Договор без срока поставки</div>
+        <div class="doc-snippet">
+          "Договор поставки №7-2026. Предмет: металлоконструкции по спецификации (Приложение №1). <br>
+          Оплата: 50% предоплата, 50% по факту отгрузки. Срок поставки: "в разумные сроки после получения предоплаты"."
+        </div>
+        <p><strong>Вопрос:</strong> Сметчик торопит — объект сдают через 6 недель. В чём риск формулировки срока поставки в этом договоре?</p>
+        <details class="ans"><summary></summary>
+          <div class="body">
+            <span class="h">Срок поставки юридически не определён — взыскать пеню за задержку не получится</span>
+            <span class="p">Формулировка «в разумные сроки» не является конкретным сроком с точки зрения закона. Если поставщик задержит отгрузку на месяц, формально он может ссылаться на то, что срок ещё «разумный» — оспорить это в суде будет сложно и долго.
+            <br><br>
+            <strong>Итог:</strong> Снабженец обязан настоять на конкретной дате или количестве рабочих дней с момента предоплаты («не позднее 30 рабочих дней с даты поступления аванса»), иначе компания не сможет вовремя зафиксировать срыв сроков поставки и предъявить претензию.</span>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <a class="back-to-nav" href="#top">↑ К списку модулей</a>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- МОДУЛЬ 4: Складской учёт и приёмка товара -->
+<!-- ============================================================ -->
+<div class="module" id="module-4">
+  <div class="module-head">
+    <div class="mlabel">Модуль 4 из 4</div>
+    <h2>📦 Складской учёт и приёмка товара</h2>
+    <p class="msub">Правила приёмки, акты расхождений, пересортица и недостача</p>
+  </div>
+  <div class="module-body">
+
+    <!-- 4.1 Словарь -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">1</span> Складские термины</h3>
+      <p class="instruction">Без знания этих терминов легко подписать документ не глядя — и потерять деньги компании.</p>
+
+      <div class="vgroup">
+        <div class="vgroup-title">Документы приёмки</div>
+        <div class="vocab-grid">
+          <div class="vc"><div class="slang">УПД</div><div class="fsnb">Универсальный передаточный документ (накладная + счёт-фактура)</div><div class="unit">Документ</div></div>
+          <div class="vc"><div class="slang">ТОРГ-12</div><div class="fsnb">Товарная накладная — подтверждает передачу товара</div><div class="unit">Документ</div></div>
+          <div class="vc"><div class="slang">Акт расхождений</div><div class="fsnb">Документ, фиксирующий несовпадение факта с накладной (форма ТОРГ-2)</div><div class="unit">Документ</div></div>
+          <div class="vc"><div class="slang">Доверенность М-2</div><div class="fsnb">Документ, дающий право получать ТМЦ от имени компании</div><div class="unit">Документ</div></div>
+        </div>
+      </div>
+
+      <div class="vgroup">
+        <div class="vgroup-title">Проблемы при приёмке</div>
+        <div class="vocab-grid">
+          <div class="vc"><div class="slang">Пересортица</div><div class="fsnb">Поставлен товар не той марки/размера вместо заказанного</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Недостача</div><div class="fsnb">Фактическое количество товара меньше указанного в накладной</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Пересорт по паллетам</div><div class="fsnb">Расхождение по факту при поштучном пересчёте многоместного груза</div><div class="unit">—</div></div>
+          <div class="vc"><div class="slang">Скрытый брак</div><div class="fsnb">Дефект, не видимый при внешнем осмотре упаковки</div><div class="unit">—</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4.2 Правда/Ложь -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">2</span> Проверь себя: склад и приёмка</h3>
+      <p class="instruction">Нажмите «Верно» или «Неверно».</p>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «Если кладовщик подписал накладную без пересчёта товара "на глаз", а через неделю обнаружилась недостача — предъявить претензию поставщику всё ещё можно без проблем».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m4tf1" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m4tf1" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! Подписанная без замечаний накладная юридически означает, что товар принят в полном соответствии с документом. Предъявить претензию через неделю практически невозможно — поставщик законно откажет, ссылаясь на подпись приёмки.</div>
+          <div class="hint-box success">ПРАВИЛЬНО! Подпись на накладной без оговорок означает приёмку без претензий. Любое расхождение нужно фиксировать актом в момент приёмки, а не постфактум.</div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «При обнаружении недостачи или пересортицы прямо при разгрузке достаточно устно сообщить водителю — он передаст информацию поставщику».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m4tf2" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m4tf2" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! Устное сообщение водителю не имеет юридической силы. Необходимо составить акт расхождений (ТОРГ-2) на месте, с подписями обеих сторон (или в одностороннем порядке с фото- и видеофиксацией, если водитель отказывается подписывать).</div>
+          <div class="hint-box success">ПРАВИЛЬНО! Расхождение нужно фиксировать письменно — актом, с подписями или хотя бы с фото- и видеофиксацией на месте. Устное сообщение водителю ничего не доказывает в случае спора.</div>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-text">Утверждение: «Доверенность на получение ТМЦ (форма М-2) обязательна только для крупных поставок свыше определённой суммы».</div>
+        <div class="tf-row">
+          <label><input type="radio" name="m4tf3" class="opt-input no"><span class="opt">Верно</span></label>
+          <label><input type="radio" name="m4tf3" class="opt-input ok"><span class="opt">Неверно</span></label>
+          <div class="hint-box error">ОШИБКА! Доверенность нужна для любой поставки, где сотрудник получает товар от имени компании, независимо от суммы — это подтверждает его полномочия принимать ТМЦ. Сумма поставки на это не влияет.</div>
+          <div class="hint-box success">ПРАВИЛЬНО! Доверенность М-2 нужна всегда, когда сотрудник получает товар от имени компании — вне зависимости от суммы поставки. Без неё поставщик формально вправе отказать в выдаче груза.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4.3 Кейс -->
+    <section class="sub">
+      <h3 class="sub-title"><span class="nb">3</span> Найди подвох в документах</h3>
+      <p class="instruction">Реальная ситуация из практики снабжения.</p>
+
+      <div class="fib">
+        <div class="task-title">Кейс: Приёмка паллет с плиткой без поштучного пересчёта</div>
+        <div class="doc-snippet">
+          "Накладная ТОРГ-12. Плитка тротуарная — 40 паллет по 20 м² (заявлено 800 м² итого). <br>
+          Кладовщик пересчитал количество паллет (40 шт совпало), расписался в приёмке без вскрытия упаковки."
+        </div>
+        <p><strong>Вопрос:</strong> Через 2 недели при выкладке плитки на объекте обнаружено, что в 6 паллетах товар лежит не полностью (упаковка вскрыта, часть отсутствует). В чём ошибка приёмки?</p>
+        <details class="ans"><summary></summary>
+          <div class="body">
+            <span class="h">Пересчитано количество мест, а не фактическое количество товара</span>
+            <span class="p">Кладовщик пересчитал паллеты (40 штук), но не вскрыл упаковку для проверки реального количества плитки внутри. Между приёмкой и вскрытием прошло 2 недели — теперь невозможно доказать, был ли товар недогружен поставщиком или пропал уже на складе компании.
+            <br><br>
+            <strong>Итог:</strong> При приёмке многоместных грузов нужно выборочно вскрывать паллеты (хотя бы часть от партии) и сверять вес/количество с документами на месте. Чем дольше тянуть с проверкой, тем сложнее доказать вину поставщика, а не собственного склада.</span>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <a class="back-to-nav" href="#top">↑ К списку модулей</a>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ФИНАЛЬНЫЙ ЭКЗАМЕН -->
+<!-- ============================================================ -->
+<div class="module" id="exam">
+  <div class="exam-banner">
+    <h2>★ Финальный экзамен</h2>
+    <p>8 вопросов по всем 4 модулям. Выберите один вариант ответа в каждом вопросе — правильный сразу подсветится зелёным.</p>
+  </div>
+  <div class="module-body" style="padding-top: 4px;">
+
+    <div id="exam-score-box" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:0.88rem; font-weight:700; color:#1e3a8a;">Результат экзамена</span>
+      <span id="exam-score-text" style="font-size:0.95rem; font-weight:800; color:#64748b;">0 / 8 отвечено</span>
+    </div>
+
+    <!-- Вопрос 1 (Модуль 1) -->
+    <section class="sub">
+      <span class="exam-q-num">Модуль 1 · КАЦ и сметы</span>
+      <div class="q-text" style="margin-bottom:12px;">Что обязательно должно быть указано в КП для конъюнктурного анализа, чтобы документ приняла экспертиза?</div>
+      <div class="mc-row exam-q">
+        <label><input type="radio" name="ex1" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Только название компании и цена</span></label>
+        <label><input type="radio" name="ex1" class="opt-input ok exam-input"><span class="mc-opt"><span class="bullet"></span>ИНН, КПП, дата, адрес поставщика и подпись с печатью</span></label>
+        <label><input type="radio" name="ex1" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Устная договорённость по телефону достаточна</span></label>
+      </div>
+    </section>
+
+    <!-- Вопрос 2 (Модуль 1) -->
+    <section class="sub">
+      <span class="exam-q-num">Модуль 1 · КАЦ и сметы</span>
+      <div class="q-text" style="margin-bottom:12px;">На какие позиции в смете не нужно собирать КАЦ (3 коммерческих предложения)?</div>
+      <div class="mc-row exam-q">
+        <label><input type="radio" name="ex2" class="opt-input ok exam-input"><span class="mc-opt"><span class="bullet"></span>На базовые материалы, которые уже есть в ФСНБ / ФГИС ЦС</span></label>
+        <label><input type="radio" name="ex2" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>На уникальное оборудование без расценки в базе</span></label>
+        <label><input type="radio" name="ex2" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>На все позиции без исключения</span></label>
+      </div>
+    </section>
+
+    <!-- Вопрос 3 (Модуль 2) -->
+    <section class="sub">
+      <span class="exam-q-num">Модуль 2 · Логистика</span>
+      <div class="q-text" style="margin-bottom:12px;">Фраза в КП «доставка включена в стоимость» обычно означает:</div>
+      <div class="mc-row exam-q">
+        <label><input type="radio" name="ex3" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Доставка и полная разгрузка силами поставщика</span></label>
+        <label><input type="radio" name="ex3" class="opt-input ok exam-input"><span class="mc-opt"><span class="bullet"></span>Только довоз до объекта, разгрузка — отдельный вопрос</span></label>
+        <label><input type="radio" name="ex3" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Доставка до любой точки страны бесплатно</span></label>
+      </div>
+    </section>
+
+    <!-- Вопрос 4 (Модуль 2) -->
+    <section class="sub">
+      <span class="exam-q-num">Модуль 2 · Логистика</span>
+      <div class="q-text" style="margin-bottom:12px;">Что нужно уточнить у поставщика заранее, если подъезд к объекту стеснён городской застройкой?</div>
+      <div class="mc-row exam-q">
+        <label><input type="radio" name="ex4" class="opt-input ok exam-input"><span class="mc-opt"><span class="bullet"></span>Тип транспорта под габариты подъезда (фура / бычок / газель)</span></label>
+        <label><input type="radio" name="ex4" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Цвет кузова автомобиля</span></label>
+        <label><input type="radio" name="ex4" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Это не важно, главное — низкая цена</span></label>
+      </div>
+    </section>
+
+    <!-- Вопрос 5 (Модуль 3) -->
+    <section class="sub">
+      <span class="exam-q-num">Модуль 3 · Договоры и риски</span>
+      <div class="q-text" style="margin-bottom:12px;">Почему важно прописывать в договоре конкретный размер пени за просрочку поставки?</div>
+      <div class="mc-row exam-q">
+        <label><input type="radio" name="ex5" class="opt-input ok exam-input"><span class="mc-opt"><span class="bullet"></span>Без этого взыскать неустойку крайне сложно — придётся доказывать убытки через суд</span></label>
+        <label><input type="radio" name="ex5" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Закон сам по умолчанию устанавливает пеню в любом договоре</span></label>
+        <label><input type="radio" name="ex5" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Это формальность и роли не играет</span></label>
+      </div>
+    </section>
+
+    <!-- Вопрос 6 (Модуль 3) -->
+    <section class="sub">
+      <span class="exam-q-num">Модуль 3 · Договоры и риски</span>
+      <div class="q-text" style="margin-bottom:12px;">Формулировка срока поставки «в разумные сроки после предоплаты» — это:</div>
+      <div class="mc-row exam-q">
+        <label><input type="radio" name="ex6" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Чёткий и юридически надёжный срок</span></label>
+        <label><input type="radio" name="ex6" class="opt-input ok exam-input"><span class="mc-opt"><span class="bullet"></span>Юридически расплывчатая формулировка, мешающая взыскать пеню за задержку</span></label>
+        <label><input type="radio" name="ex6" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Стандарт, который всегда означает «не более 7 дней»</span></label>
+      </div>
+    </section>
+
+    <!-- Вопрос 7 (Модуль 4) -->
+    <section class="sub">
+      <span class="exam-q-num">Модуль 4 · Склад и приёмка</span>
+      <div class="q-text" style="margin-bottom:12px;">Если кладовщик подписал накладную без замечаний, а потом обнаружилась недостача — что это означает для претензии к поставщику?</div>
+      <div class="mc-row exam-q">
+        <label><input type="radio" name="ex7" class="opt-input ok exam-input"><span class="mc-opt"><span class="bullet"></span>Предъявить претензию практически невозможно — подпись подтвердила приёмку без замечаний</span></label>
+        <label><input type="radio" name="ex7" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Претензию можно предъявить в любой момент без ограничений</span></label>
+        <label><input type="radio" name="ex7" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Достаточно позвонить поставщику и сообщить устно</span></label>
+      </div>
+    </section>
+
+    <!-- Вопрос 8 (Модуль 4) -->
+    <section class="sub">
+      <span class="exam-q-num">Модуль 4 · Склад и приёмка</span>
+      <div class="q-text" style="margin-bottom:12px;">При приёмке многоместного груза (паллеты, упаковки) для надёжной проверки нужно:</div>
+      <div class="mc-row exam-q">
+        <label><input type="radio" name="ex8" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Пересчитать только количество мест (паллет), не вскрывая упаковку</span></label>
+        <label><input type="radio" name="ex8" class="opt-input ok exam-input"><span class="mc-opt"><span class="bullet"></span>Выборочно вскрыть упаковку и сверить фактическое количество с документами на месте</span></label>
+        <label><input type="radio" name="ex8" class="opt-input no exam-input"><span class="mc-opt"><span class="bullet"></span>Подписать накладную сразу, проверка не требуется</span></label>
+      </div>
+    </section>
+
+    <div id="exam-final-result" style="display:none; margin-top: 8px;"></div>
+
+    <a class="back-to-nav" href="#top">↑ К списку модулей</a>
+  </div>
+</div>
+
+
+
+
+
+
+<!-- РЕКЛАМНЫЙ БЛОК (ВОРОНКА) -->
+<div class="cta-footer">
+  <h3>Автоматизируйте рутину снабжения</h3>
+  <p>Тяжело держать в голове все ИНН, ставки на логистику, договорные риски и правила приёмки?<br> Наша строительная ERP-система автоматически собирает правильные КАЦ, ведёт договоры и переводит заявки с объектов в единую базу номенклатуры.</p>
+  <a href="https://example.com" target="_blank">Попробовать ERP-систему</a>
+</div>
+
+<footer><p>© 2026 Инструменты для строительного бизнеса</p></footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ===== Подсчёт результата экзамена =====
+  var examInputs = document.querySelectorAll(".exam-input");
+  var totalExamQ = document.querySelectorAll(".exam-q").length;
+  var scoreText = document.getElementById("exam-score-text");
+  var finalResultBox = document.getElementById("exam-final-result");
+
+  function updateExamScore() {
+    var answered = 0;
+    var correct = 0;
+    var groups = {};
+
+    examInputs.forEach(function (inp) {
+      if (!groups[inp.name]) groups[inp.name] = [];
+      groups[inp.name].push(inp);
+    });
+
+    Object.keys(groups).forEach(function (name) {
+      var checked = groups[name].filter(function (i) { return i.checked; })[0];
+      if (checked) {
+        answered++;
+        if (checked.classList.contains("ok")) correct++;
+      }
+    });
+
+    scoreText.textContent = answered + " / " + totalExamQ + " отвечено";
+    scoreText.style.color = answered === 0 ? "#64748b" : "#1e3a8a";
+
+    if (answered === totalExamQ) {
+      var pct = Math.round((correct / totalExamQ) * 100);
+      var verdict, color, bg;
+      if (pct >= 87) { verdict = "Отлично! Уверенное знание материала."; color = "#166534"; bg = "#dcfce7"; }
+      else if (pct >= 62) { verdict = "Неплохо, но стоит повторить слабые темы."; color = "#92400e"; bg = "#fef3c7"; }
+      else { verdict = "Рекомендуем перепройти модули — много пробелов."; color = "#991b1b"; bg = "#fee2e2"; }
+
+      finalResultBox.style.display = "block";
+      finalResultBox.style.background = bg;
+      finalResultBox.style.color = color;
+      finalResultBox.style.border = "1px solid " + color;
+      finalResultBox.style.borderRadius = "10px";
+      finalResultBox.style.padding = "18px";
+      finalResultBox.style.textAlign = "center";
+      finalResultBox.innerHTML =
+        '<div style="font-size:1.6rem; font-weight:800; margin-bottom:4px;">' + correct + ' из ' + totalExamQ + ' (' + pct + '%)</div>' +
+        '<div style="font-size:0.92rem; font-weight:600;">' + verdict + '</div>';
+    } else {
+      finalResultBox.style.display = "none";
+    }
+
+    updateCourseProgress();
+  }
+
+  examInputs.forEach(function (inp) {
+    inp.addEventListener("change", updateExamScore);
+  });
+
+  // ===== Общий прогресс курса (модули + экзамен) =====
+  var allTfAndExamInputs = document.querySelectorAll(".opt-input");
+  var progressFill = document.querySelector(".progress-fill");
+
+  function updateCourseProgress() {
+    var groups = {};
+    allTfAndExamInputs.forEach(function (inp) {
+      var key = inp.name;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(inp);
+    });
+    var totalGroups = Object.keys(groups).length;
+    var answeredGroups = 0;
+    Object.keys(groups).forEach(function (name) {
+      var anyChecked = groups[name].some(function (i) { return i.checked; });
+      if (anyChecked) answeredGroups++;
+    });
+    var pct = totalGroups === 0 ? 0 : Math.round((answeredGroups / totalGroups) * 100);
+    progressFill.style.width = pct + "%";
+  }
+
+  allTfAndExamInputs.forEach(function (inp) {
+    inp.addEventListener("change", updateCourseProgress);
+  });
+
+  updateCourseProgress();
+})();
+</script>
+
+</body>
+</html>
