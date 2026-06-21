@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Бесплатные калькуляторы для снабженца: вес арматуры по ГОСТ 34028-2016 и объём бетона для плиты, столбов и фундамента.">
+    <title>Калькуляторы арматуры и бетона | Инструмент снабженца</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 520px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 { font-size: 1.6rem; color: #1e3a8a; margin-top: 0; margin-bottom: 5px; }
+        p.subtitle { color: #64748b; font-size: 0.95rem; margin-top: 0; margin-bottom: 22px; }
+
+        /* Вкладки верхнего уровня: Арматура / Бетон */
+        .main-tabs {
+            display: flex;
+            gap: 6px;
+            background: #eef2f7;
+            padding: 4px;
+            border-radius: 10px;
+            margin-bottom: 22px;
+        }
+        .main-tabs label {
+            flex: 1;
+            text-align: center;
+            padding: 10px 8px;
+            border-radius: 7px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        input[name="main-tab"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+        #tab-rebar:checked ~ .container .main-tabs label[for="tab-rebar"],
+        #tab-concrete:checked ~ .container .main-tabs label[for="tab-concrete"] {
+            background: #fff;
+            color: #1e3a8a;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .panel { display: none; }
+        #tab-rebar:checked ~ .container #panel-rebar,
+        #tab-concrete:checked ~ .container #panel-concrete {
+            display: block;
+        }
+
+        /* Под-вкладки внутри Бетона: плита / столбы / фундамент */
+        .sub-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .sub-tabs label {
+            flex: 1;
+            min-width: 90px;
+            text-align: center;
+            padding: 8px 6px;
+            border-radius: 7px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            border: 1.5px solid #c7d7f5;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        input[name="concrete-shape"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+        .shape-panel { display: none; }
+        #shape-slab:checked ~ .sub-tabs label[for="shape-slab"],
+        #shape-columns:checked ~ .sub-tabs label[for="shape-columns"],
+        #shape-footing:checked ~ .sub-tabs label[for="shape-footing"] {
+            background: #1e3a8a;
+            color: #fff;
+            border-color: #1e3a8a;
+        }
+        #shape-slab:checked ~ #shape-panel-slab,
+        #shape-columns:checked ~ #shape-panel-columns,
+        #shape-footing:checked ~ #shape-panel-footing {
+            display: block;
+        }
+
+        /* Элементы формы */
+        .form-group { margin-bottom: 18px; }
+        label.field-label { display: block; font-weight: 600; margin-bottom: 8px; color: #1e293b; font-size: 0.95rem; }
+        select, input[type="number"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #333;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .dim-row { display: flex; gap: 10px; }
+        .dim-row .form-group { flex: 1; }
+        .dim-hint { font-size: 0.76rem; color: #94a3b8; margin-top: 4px; }
+
+        /* Блок с результатом */
+        .result-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .result-val { font-size: 2.5rem; font-weight: bold; color: #2563eb; line-height: 1.2; }
+        .result-sub { color: #64748b; font-size: 0.95rem; margin-top: 5px; }
+
+        /* Список столбов/опор */
+        .count-row { display: flex; gap: 10px; align-items: flex-end; }
+        .count-row .form-group { flex: 1; }
+
+        /* Лид-магнит (Воронка в ERP) */
+        .lead-magnet {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .lead-magnet h2 { margin: 0 0 10px 0; font-size: 1.2rem; }
+        .lead-magnet p { font-size: 0.9rem; opacity: 0.9; margin-bottom: 20px; }
+        .cta-button {
+            display: inline-block;
+            background: #fbbf24;
+            color: #92400e;
+            font-weight: bold;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            transition: transform 0.1s, background 0.2s;
+        }
+        .cta-button:hover { background: #f59e0b; transform: translateY(-2px); }
+
+        @media (max-width: 480px) {
+            .container { padding: 20px; margin: 10px auto; }
+            h1 { font-size: 1.4rem; }
+            .dim-row { flex-direction: column; gap: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<input type="radio" name="main-tab" id="tab-rebar" checked>
+<input type="radio" name="main-tab" id="tab-concrete">
+
+<div class="container">
+    <h1>🏗️ Калькуляторы снабженца</h1>
+    <p class="subtitle">Вес арматуры и объём бетона — быстрый расчёт по месту</p>
+
+    <div class="main-tabs">
+        <label for="tab-rebar">Арматура</label>
+        <label for="tab-concrete">Бетон</label>
+    </div>
+
+    <!-- ===================== ПАНЕЛЬ: АРМАТУРА ===================== -->
+    <div class="panel" id="panel-rebar">
+        <p class="subtitle" style="margin-bottom:18px;">Перевод из метров в тонны (ГОСТ 34028-2016)</p>
+
+        <div class="form-group">
+            <label class="field-label" for="diameter">Диаметр арматуры (мм):</label>
+            <select id="diameter">
+                <option value="0.222">6 мм</option>
+                <option value="0.395">8 мм</option>
+                <option value="0.617" selected>10 мм</option>
+                <option value="0.888">12 мм</option>
+                <option value="1.210">14 мм</option>
+                <option value="1.580">16 мм</option>
+                <option value="2.000">18 мм</option>
+                <option value="2.470">20 мм</option>
+                <option value="2.980">22 мм</option>
+                <option value="3.850">25 мм</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="field-label" for="length">Общая длина по смете (метры):</label>
+            <input type="number" id="length" placeholder="Например: 1500" min="0">
+        </div>
+
+        <div class="result-box">
+            <div class="result-val" id="result-tons">0.000 т</div>
+            <div class="result-sub" id="result-kg">0 кг</div>
+        </div>
+    </div>
+
+    <!-- ===================== ПАНЕЛЬ: БЕТОН ===================== -->
+    <div class="panel" id="panel-concrete">
+        <p class="subtitle" style="margin-bottom:18px;">Объём бетона по фигуре конструкции, м³</p>
+
+        <input type="radio" name="concrete-shape" id="shape-slab" checked>
+        <input type="radio" name="concrete-shape" id="shape-columns">
+        <input type="radio" name="concrete-shape" id="shape-footing">
+
+        <div class="sub-tabs">
+            <label for="shape-slab">Плита</label>
+            <label for="shape-columns">Столбы</label>
+            <label for="shape-footing">Фундамент</label>
+        </div>
+
+        <!-- ПЛИТА: Длина × Ширина × Толщина -->
+        <div class="shape-panel" id="shape-panel-slab">
+            <div class="dim-row">
+                <div class="form-group">
+                    <label class="field-label" for="slab-l">Длина, м</label>
+                    <input type="number" id="slab-l" placeholder="6.0" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="field-label" for="slab-w">Ширина, м</label>
+                    <input type="number" id="slab-w" placeholder="4.0" min="0" step="0.01">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="field-label" for="slab-h">Толщина, см</label>
+                <input type="number" id="slab-h" placeholder="20" min="0" step="0.1">
+                <div class="dim-hint">Указывайте толщину в сантиметрах — удобнее по проекту</div>
+            </div>
+            <div class="result-box">
+                <div class="result-val" id="slab-result">0.00 м³</div>
+                <div class="result-sub" id="slab-result-l">0 л</div>
+            </div>
+        </div>
+
+        <!-- СТОЛБЫ: круглые/квадратные, с количеством -->
+        <div class="shape-panel" id="shape-panel-columns">
+            <div class="form-group">
+                <label class="field-label" for="col-shape">Форма сечения</label>
+                <select id="col-shape">
+                    <option value="round">Круглое (диаметр)</option>
+                    <option value="square">Квадратное / прямоугольное</option>
+                </select>
+            </div>
+
+            <div class="dim-row" id="col-round-fields">
+                <div class="form-group">
+                    <label class="field-label" for="col-d">Диаметр, см</label>
+                    <input type="number" id="col-d" placeholder="30" min="0" step="0.5">
+                </div>
+            </div>
+            <div class="dim-row" id="col-square-fields" style="display:none;">
+                <div class="form-group">
+                    <label class="field-label" for="col-side-a">Сторона A, см</label>
+                    <input type="number" id="col-side-a" placeholder="30" min="0" step="0.5">
+                </div>
+                <div class="form-group">
+                    <label class="field-label" for="col-side-b">Сторона B, см</label>
+                    <input type="number" id="col-side-b" placeholder="30" min="0" step="0.5">
+                </div>
+            </div>
+
+            <div class="dim-row">
+                <div class="form-group">
+                    <label class="field-label" for="col-height">Высота столба, м</label>
+                    <input type="number" id="col-height" placeholder="3.0" min="0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label class="field-label" for="col-count">Количество, шт</label>
+                    <input type="number" id="col-count" placeholder="4" min="1" step="1" value="1">
+                </div>
+            </div>
+
+            <div class="result-box">
+                <div class="result-val" id="col-result">0.00 м³</div>
+                <div class="result-sub" id="col-result-each">0.00 м³ на один столб</div>
+            </div>
+        </div>
+
+        <!-- ФУНДАМЕНТ: ленточный, по периметру -->
+        <div class="shape-panel" id="shape-panel-footing">
+            <div class="form-group">
+                <label class="field-label" for="foot-perimeter">Длина ленты (периметр), м</label>
+                <input type="number" id="foot-perimeter" placeholder="40" min="0" step="0.1">
+                <div class="dim-hint">Суммарная длина всех участков ленточного фундамента</div>
+            </div>
+            <div class="dim-row">
+                <div class="form-group">
+                    <label class="field-label" for="foot-width">Ширина ленты, см</label>
+                    <input type="number" id="foot-width" placeholder="40" min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label class="field-label" for="foot-height">Высота ленты, см</label>
+                    <input type="number" id="foot-height" placeholder="60" min="0" step="1">
+                </div>
+            </div>
+            <div class="result-box">
+                <div class="result-val" id="foot-result">0.00 м³</div>
+                <div class="result-sub" id="foot-result-l">0 л</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lead-magnet">
+        <h2>Устали считать вручную?</h2>
+        <p>Сводите КАЦ, запрашивайте КП у поставщиков и ведите складской учет без ошибок. Система сделает рутину за вас.</p>
+        <a href="https://example.com" target="_blank" class="cta-button">Попробовать ERP бесплатно</a>
+    </div>
+</div>
+
+<script>
+    // ===== Калькулятор арматуры =====
+    const diameterSelect = document.getElementById('diameter');
+    const lengthInput = document.getElementById('length');
+    const resultTons = document.getElementById('result-tons');
+    const resultKg = document.getElementById('result-kg');
+
+    function calcRebar() {
+        const weightPerMeter = parseFloat(diameterSelect.value);
+        const length = parseFloat(lengthInput.value);
+
+        if (isNaN(length) || length <= 0) {
+            resultTons.textContent = "0.000 т";
+            resultKg.textContent = "0 кг";
+            return;
+        }
+
+        const totalKg = weightPerMeter * length;
+        const totalTons = totalKg / 1000;
+
+        resultKg.textContent = totalKg.toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + " кг";
+        resultTons.textContent = totalTons.toLocaleString('ru-RU', { maximumFractionDigits: 3 }) + " т";
+    }
+
+    diameterSelect.addEventListener('change', calcRebar);
+    lengthInput.addEventListener('input', calcRebar);
+
+    // ===== Калькулятор бетона: ПЛИТА =====
+    const slabL = document.getElementById('slab-l');
+    const slabW = document.getElementById('slab-w');
+    const slabH = document.getElementById('slab-h');
+    const slabResult = document.getElementById('slab-result');
+    const slabResultL = document.getElementById('slab-result-l');
+
+    function calcSlab() {
+        const l = parseFloat(slabL.value);
+        const w = parseFloat(slabW.value);
+        const hCm = parseFloat(slabH.value);
+
+        if (isNaN(l) || isNaN(w) || isNaN(hCm) || l <= 0 || w <= 0 || hCm <= 0) {
+            slabResult.textContent = "0.00 м³";
+            slabResultL.textContent = "0 л";
+            return;
+        }
+        const hM = hCm / 100;
+        const volume = l * w * hM;
+        slabResult.textContent = volume.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) + " м³";
+        slabResultL.textContent = Math.round(volume * 1000).toLocaleString('ru-RU') + " л";
+    }
+    [slabL, slabW, slabH].forEach(el => el.addEventListener('input', calcSlab));
+
+    // ===== Калькулятор бетона: СТОЛБЫ =====
+    const colShape = document.getElementById('col-shape');
+    const colRoundFields = document.getElementById('col-round-fields');
+    const colSquareFields = document.getElementById('col-square-fields');
+    const colD = document.getElementById('col-d');
+    const colSideA = document.getElementById('col-side-a');
+    const colSideB = document.getElementById('col-side-b');
+    const colHeight = document.getElementById('col-height');
+    const colCount = document.getElementById('col-count');
+    const colResult = document.getElementById('col-result');
+    const colResultEach = document.getElementById('col-result-each');
+
+    function toggleColumnShape() {
+        if (colShape.value === 'round') {
+            colRoundFields.style.display = 'flex';
+            colSquareFields.style.display = 'none';
+        } else {
+            colRoundFields.style.display = 'none';
+            colSquareFields.style.display = 'flex';
+        }
+        calcColumns();
+    }
+
+    function calcColumns() {
+        const heightM = parseFloat(colHeight.value);
+        const count = parseInt(colCount.value) || 0;
+
+        let areaM2 = NaN;
+
+        if (colShape.value === 'round') {
+            const dCm = parseFloat(colD.value);
+            if (!isNaN(dCm) && dCm > 0) {
+                const rM = (dCm / 100) / 2;
+                areaM2 = Math.PI * rM * rM;
+            }
+        } else {
+            const aCm = parseFloat(colSideA.value);
+            const bCm = parseFloat(colSideB.value);
+            if (!isNaN(aCm) && !isNaN(bCm) && aCm > 0 && bCm > 0) {
+                areaM2 = (aCm / 100) * (bCm / 100);
+            }
+        }
+
+        if (isNaN(areaM2) || isNaN(heightM) || heightM <= 0 || count <= 0) {
+            colResult.textContent = "0.00 м³";
+            colResultEach.textContent = "0.00 м³ на один столб";
+            return;
+        }
+
+        const volEach = areaM2 * heightM;
+        const volTotal = volEach * count;
+
+        colResult.textContent = volTotal.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) + " м³";
+        colResultEach.textContent = volEach.toLocaleString('ru-RU', { maximumFractionDigits: 3 }) + " м³ на один столб";
+    }
+
+    colShape.addEventListener('change', toggleColumnShape);
+    [colD, colSideA, colSideB, colHeight, colCount].forEach(el => el.addEventListener('input', calcColumns));
+
+    // ===== Калькулятор бетона: ФУНДАМЕНТ (ленточный) =====
+    const footPerimeter = document.getElementById('foot-perimeter');
+    const footWidth = document.getElementById('foot-width');
+    const footHeight = document.getElementById('foot-height');
+    const footResult = document.getElementById('foot-result');
+    const footResultL = document.getElementById('foot-result-l');
+
+    function calcFooting() {
+        const perimeter = parseFloat(footPerimeter.value);
+        const widthCm = parseFloat(footWidth.value);
+        const heightCm = parseFloat(footHeight.value);
+
+        if (isNaN(perimeter) || isNaN(widthCm) || isNaN(heightCm) || perimeter <= 0 || widthCm <= 0 || heightCm <= 0) {
+            footResult.textContent = "0.00 м³";
+            footResultL.textContent = "0 л";
+            return;
+        }
+
+        const widthM = widthCm / 100;
+        const heightM = heightCm / 100;
+        const volume = perimeter * widthM * heightM;
+
+        footResult.textContent = volume.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) + " м³";
+        footResultL.textContent = Math.round(volume * 1000).toLocaleString('ru-RU') + " л";
+    }
+    [footPerimeter, footWidth, footHeight].forEach(el => el.addEventListener('input', calcFooting));
+
+    // Инициализация состояний при загрузке
+    toggleColumnShape();
+</script>
+
+</body>
+</html>
