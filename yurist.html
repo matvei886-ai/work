@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Строй-Юрист | Калькулятор неустойки и генератор претензий</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --primary:#1e293b;--primary-light:#334155;--accent:#b45309;--accent-light:#d97706;
+  --bg:#fafaf9;--surface:#fff;--surface2:#f8fafc;
+  --text:#1e293b;--text2:#64748b;--text3:#94a3b8;
+  --border:#e2e8f0;--radius:12px;
+  --ok:#16a34a;--ok-bg:#dcfce7;--warn:#b45309;--warn-bg:#fef3c7;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);padding:16px;line-height:1.55;-webkit-text-size-adjust:100%;}
+.container{max-width:860px;margin:0 auto;}
+
+/* ===== ШАПКА ===== */
+header{
+  background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#334155 100%);
+  color:#fff;border-radius:16px;padding:24px 22px;margin-bottom:18px;
+  box-shadow:0 6px 18px rgba(15,23,42,.25);position:relative;overflow:hidden;
+}
+header::before{content:'⚖️';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:5rem;opacity:.08;pointer-events:none;}
+header .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:700;margin-bottom:10px;}
+header h1{font-size:1.5rem;font-weight:800;margin-bottom:5px;line-height:1.25;}
+header p{font-size:.88rem;opacity:.82;}
+
+/* ===== КАРТОЧКИ ===== */
+.card{background:var(--surface);border-radius:var(--radius);padding:20px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
+.card-title{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:800;color:var(--primary);margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--bg);}
+.card-title .snum{width:26px;height:26px;border-radius:7px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;flex-shrink:0;}
+
+/* ===== ФОРМА ===== */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:span 2;}
+.form-group label{font-size:.76rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;}
+input,select{padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.92rem;font-family:inherit;color:var(--text);background:var(--surface);transition:.15s;}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(180,83,9,.1);}
+
+/* ===== РЕЗУЛЬТАТ ===== */
+.result-box{
+  background:linear-gradient(135deg,#fffbeb,#fef3c7);
+  border:1.5px solid #fde68a;border-radius:var(--radius);
+  padding:22px;text-align:center;margin-bottom:14px;
+}
+.result-box .rlabel{font-size:.82rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.result-val{font-size:2.4rem;font-weight:900;color:#92400e;line-height:1.1;margin-bottom:6px;}
+.result-details{font-size:.82rem;color:var(--accent-light);line-height:1.5;}
+
+/* ===== КНОПКИ ===== */
+.btn-row{display:flex;gap:12px;margin-bottom:14px;}
+.btn{flex:1;display:inline-flex;justify-content:center;align-items:center;gap:8px;border:none;padding:14px;font-size:.95rem;font-weight:800;border-radius:10px;cursor:pointer;font-family:inherit;transition:.15s;}
+.btn:active{transform:scale(.99);}
+.btn-calc{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(15,23,42,.2);}
+.btn-calc:hover{background:var(--primary-light);}
+.btn-word{background:#2563eb;color:#fff;box-shadow:0 3px 10px rgba(37,99,235,.22);}
+.btn-word:hover{background:#1d4ed8;}
+.btn-word:disabled{background:#cbd5e1;box-shadow:none;cursor:not-allowed;}
+
+/* ===== СЧЁТЧИК / PAYWALL ===== */
+.usage-counter{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:10px;}
+.usage-counter .uc-label{font-size:.8rem;font-weight:700;color:#374151;}
+.usage-counter .uc-dots{display:flex;gap:6px;}
+.uc-dot{width:13px;height:13px;border-radius:50%;background:#e2e8f0;border:1.5px solid #cbd5e1;}
+.uc-dot.used{background:#94a3b8;border-color:#94a3b8;}
+.uc-dot.current{background:var(--ok);border-color:var(--ok);}
+.usage-counter.warn{background:var(--warn-bg);border-color:#fde68a;}
+.usage-counter.warn .uc-label{color:#92400e;}
+
+.gen-status{font-size:.8rem;color:var(--text2);text-align:center;min-height:1em;}
+.gen-status.ok{color:var(--ok);font-weight:700;}
+
+.paywall-block{display:none;}
+.paywall-block.show{display:block;margin-top:10px;}
+.paywall-inner{background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:14px;padding:24px 20px;color:#fff;text-align:center;}
+.paywall-inner .pw-icon{font-size:2rem;margin-bottom:8px;}
+.paywall-inner .pw-eyebrow{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fbbf24;margin-bottom:8px;}
+.paywall-inner h3{font-size:1.1rem;margin-bottom:8px;}
+.paywall-inner p{font-size:.85rem;opacity:.85;margin-bottom:16px;line-height:1.55;max-width:420px;margin-left:auto;margin-right:auto;}
+.paywall-inner a{display:inline-block;background:#f59e0b;color:#78350f;font-weight:800;text-decoration:none;padding:12px 26px;border-radius:7px;font-size:.95rem;}
+.paywall-inner .pw-sub{font-size:.72rem;color:#64748b;margin-top:10px;}
+
+/* ===== ЛИДМАГНИТ ===== */
+.lead-magnet{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;text-align:center;margin-top:8px;}
+.lead-magnet p{font-size:.88rem;color:var(--text2);margin-bottom:8px;}
+.lead-magnet a{color:var(--accent);font-weight:700;text-decoration:none;}
+.lead-magnet a:hover{color:var(--accent-light);}
+
+/* ===== DISCLAIMER ===== */
+.disclaimer{font-size:.73rem;color:var(--text3);text-align:center;margin-top:14px;line-height:1.5;}
+
+@media(max-width:560px){
+  .form-grid{grid-template-columns:1fr;}
+  .form-group.full{grid-column:span 1;}
+  .btn-row{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <span class="badge">⚖️ Для юристов и снабженцев</span>
+  <h1>Строй-Юрист</h1>
+  <p>Калькулятор неустойки и генератор досудебной претензии в Word</p>
+</header>
+
+<!-- РЕКВИЗИТЫ -->
+<div class="card">
+  <div class="card-title"><span class="snum">1</span> Реквизиты контракта</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Ваша компания (Заказчик)</label>
+      <input type="text" id="my-company" value="ООО \"СтройГрупп\"">
+    </div>
+    <div class="form-group">
+      <label>Должник / Поставщик</label>
+      <input type="text" id="debtor-company" value="ООО \"АльфаСтрой\"">
+    </div>
+    <div class="form-group full">
+      <label>Объект / Предмет договора</label>
+      <input type="text" id="contract-subject" value="Поставка бетонных блоков на объект: Жилой комплекс, г. Краснодар">
+    </div>
+    <div class="form-group">
+      <label>Номер договора</label>
+      <input type="text" id="contract-num" value="112-П/2026">
+    </div>
+    <div class="form-group">
+      <label>Сумма долга / невыполненных работ (руб.)</label>
+      <input type="number" id="debt-amount" value="2350000">
+    </div>
+  </div>
+</div>
+
+<!-- ПРОСРОЧКА -->
+<div class="card">
+  <div class="card-title"><span class="snum">2</span> Параметры просрочки</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Начало просрочки</label>
+      <input type="date" id="date-start">
+    </div>
+    <div class="form-group">
+      <label>Конец просрочки (или сегодня)</label>
+      <input type="date" id="date-end">
+    </div>
+    <div class="form-group full">
+      <label>Тип расчёта неустойки</label>
+      <select id="penalty-type">
+        <option value="commercial">Коммерческий договор (0.1% за каждый день просрочки)</option>
+        <option value="fz44">Госконтракт 44-ФЗ (1/300 ключевой ставки ЦБ РФ)</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- РЕЗУЛЬТАТ -->
+<div class="result-box">
+  <div class="rlabel">Сумма неустойки к взысканию</div>
+  <div class="result-val" id="total-penalty">—</div>
+  <div class="result-details" id="calc-details">Укажите даты и нажмите «Рассчитать»</div>
+</div>
+
+<!-- КНОПКИ ДЕЙСТВИЙ -->
+<div class="btn-row">
+  <button class="btn btn-calc" onclick="calculatePenalty()">🧮 Рассчитать пени</button>
+  <button class="btn btn-word" id="btn-word" onclick="tryGenerateWord()" disabled>📄 Скачать претензию (Word)</button>
+</div>
+
+<!-- СЧЁТЧИК + PAYWALL -->
+<div class="usage-counter" id="usage-counter">
+  <span class="uc-label" id="uc-label">Бесплатно: 3 скачивания Word</span>
+  <div class="uc-dots" id="uc-dots">
+    <div class="uc-dot current"></div>
+    <div class="uc-dot"></div>
+    <div class="uc-dot"></div>
+  </div>
+</div>
+<div class="gen-status" id="gen-status"></div>
+
+<div class="paywall-block" id="paywall">
+  <div class="paywall-inner">
+    <div class="pw-icon">🔒</div>
+    <div class="pw-eyebrow">Бесплатный лимит исчерпан</div>
+    <h3>Вы использовали все 3 бесплатных скачивания</h3>
+    <p>PRO-версия — безлимитная генерация претензий, шаблоны исков в арбитраж, актуальная ставка ЦБ по API и интеграция с договорной базой.</p>
+    <a href="https://example.com" target="_blank">Подключить PRO-доступ →</a>
+    <div class="pw-sub">Лимит привязан к браузеру. Очистка данных сайта сбрасывает счётчик.</div>
+  </div>
+</div>
+
+<!-- ЛИДМАГНИТ -->
+<div class="lead-magnet">
+  <p>Устали собирать договоры по папкам и считать пени вручную?</p>
+  <a href="https://example.com" target="_blank">Подключить юридический модуль ERP-системы →</a>
+</div>
+
+<div class="disclaimer">
+  Расчёт носит справочный характер. Для официального взыскания обратитесь к юристу.<br>
+  Ставка ЦБ РФ в симуляции — 16%. В PRO-версии подтягивается актуальное значение по API.
+</div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var FREE_LIMIT = 3;
+var STORAGE_KEY = "legalCalc_wordCount";
+var KEY_RATE_CB = 16.0;
+var globalPenalty = 0;
+var globalDays = 0;
+var calculated = false;
+
+function $(id){ return document.getElementById(id); }
+
+// ===== Даты по умолчанию =====
+var today = new Date();
+var lastMonth = new Date();
+lastMonth.setDate(today.getDate() - 30);
+$('date-end').valueAsDate = today;
+$('date-start').valueAsDate = lastMonth;
+
+// ===== Лимит =====
+function getCount(){ try{ var v=parseInt(localStorage.getItem(STORAGE_KEY),10); return isNaN(v)?0:v; }catch(e){ return 0; } }
+function setCount(n){ try{ localStorage.setItem(STORAGE_KEY,String(n)); }catch(e){} }
+
+function renderUsageUI(){
+  var used = getCount();
+  var remaining = Math.max(0, FREE_LIMIT - used);
+  var counter = $('usage-counter');
+  var label = $('uc-label');
+  var dots = $('uc-dots');
+  var btnWord = $('btn-word');
+  var paywall = $('paywall');
+
+  dots.innerHTML = '';
+  for(var i=0; i<FREE_LIMIT; i++){
+    var dot = document.createElement('div');
+    dot.className = 'uc-dot';
+    if(i < used) dot.classList.add('used');
+    else if(i === used) dot.classList.add('current');
+    dots.appendChild(dot);
+  }
+
+  if(remaining <= 0){
+    counter.classList.add('warn');
+    label.textContent = 'Бесплатный лимит исчерпан';
+    btnWord.disabled = true;
+    paywall.classList.add('show');
+  } else {
+    counter.classList.remove('warn');
+    label.textContent = 'Бесплатно: осталось ' + remaining + ' из ' + FREE_LIMIT + ' скачиваний';
+    btnWord.disabled = !calculated;
+    paywall.classList.remove('show');
+  }
+}
+
+// ===== Расчёт =====
+window.calculatePenalty = function(){
+  var amount = parseFloat($('debt-amount').value);
+  var dateStart = new Date($('date-start').value);
+  var dateEnd = new Date($('date-end').value);
+  var type = $('penalty-type').value;
+
+  if(isNaN(amount) || amount <= 0){ alert('Укажите корректную сумму долга.'); return; }
+
+  var diff = dateEnd.getTime() - dateStart.getTime();
+  var days = Math.ceil(diff / (1000 * 3600 * 24));
+  if(days <= 0){ alert('Дата окончания должна быть позже даты начала.'); return; }
+
+  globalDays = days;
+  var penalty = 0;
+  var details = '';
+
+  if(type === 'commercial'){
+    penalty = amount * 0.001 * days;
+    details = 'Просрочка: ' + days + ' дн. | ' + amount.toLocaleString('ru-RU') + ' ₽ × 0.1% × ' + days + ' дн.';
+  } else {
+    penalty = amount * (KEY_RATE_CB / 100 / 300) * days;
+    details = 'Просрочка: ' + days + ' дн. | 44-ФЗ: ставка ЦБ ' + KEY_RATE_CB + '% (1/300).';
+  }
+
+  globalPenalty = penalty;
+  calculated = true;
+
+  $('total-penalty').textContent = penalty.toLocaleString('ru-RU', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' руб.';
+  $('calc-details').textContent = details;
+
+  if(getCount() < FREE_LIMIT) $('btn-word').disabled = false;
+};
+
+// ===== Попытка скачать Word =====
+window.tryGenerateWord = function(){
+  if(!calculated){ alert('Сначала нажмите «Рассчитать пени».'); return; }
+  if(getCount() >= FREE_LIMIT){ renderUsageUI(); return; }
+  generateWord();
+  setCount(getCount() + 1);
+  var status = $('gen-status');
+  status.textContent = '✓ Претензия скачана — откройте файл в Microsoft Word или LibreOffice';
+  status.className = 'gen-status ok';
+  renderUsageUI();
+};
+
+// ===== Генерация Word =====
+function generateWord(){
+  var myCompany   = $('my-company').value;
+  var debtor      = $('debtor-company').value;
+  var contractNum = $('contract-num').value;
+  var contractSubj= $('contract-subject').value;
+  var amount      = parseFloat($('debt-amount').value);
+  var fmtPenalty  = globalPenalty.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
+  var fmtAmount   = amount.toLocaleString('ru-RU');
+  var curDate     = new Date().toLocaleDateString('ru-RU');
+
+  var html =
+    "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>" +
+    "<head><meta charset='utf-8'><title>Досудебная претензия</title></head>" +
+    "<body style=\"font-family:'Times New Roman',serif;font-size:12pt;\">" +
+    "<div style='text-align:right;margin-bottom:40px;'>Кому: Руководителю <b>"+debtor+"</b><br>От кого: <b>"+myCompany+"</b><br>Дата: "+curDate+" г.</div>" +
+    "<h2 style='text-align:center;font-size:14pt;'>ДОСУДЕБНАЯ ПРЕТЕНЗИЯ<br>об уплате задолженности и неустойки</h2>" +
+    "<p style='text-indent:1.5cm;text-align:justify;'>Между нашими организациями был заключён договор № "+contractNum+" (далее — Договор). Предмет договора: "+contractSubj+".</p>" +
+    "<p style='text-indent:1.5cm;text-align:justify;'>Со своей стороны "+myCompany+" выполнило обязательства в полном объёме. Однако "+debtor+" нарушило сроки исполнения обязательств. Сумма основного долга/неисполненных обязательств составляет <b>"+fmtAmount+" руб.</b></p>" +
+    "<p style='text-indent:1.5cm;text-align:justify;'>В связи с нарушением сроков, за период просрочки ("+globalDays+" дн.) начислена неустойка (пени) в размере <b>"+fmtPenalty+" руб.</b></p>" +
+    "<p style='text-indent:1.5cm;text-align:justify;'>На основании вышеизложенного, руководствуясь нормами ГК РФ, требуем в срок до 10 (десяти) рабочих дней с момента получения настоящей претензии добровольно перечислить сумму долга и начисленной неустойки.</p>" +
+    "<p style='text-indent:1.5cm;text-align:justify;'>В случае неудовлетворения наших законных требований, мы будем вынуждены обратиться в Арбитражный суд с отнесением всех судебных издержек на ваш счёт.</p>" +
+    "<br><br><div>Представитель "+myCompany+": ___________________ / Подпись /</div>" +
+    "</body></html>";
+
+  var blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '\u041f\u0440\u0435\u0442\u0435\u043d\u0437\u0438\u044f_' + debtor + '.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+renderUsageUI();
+})();
+</script>
+</body>
+</html>
