@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Реестр поставщиков для строительства | Открытая база</title>
+    <style>
+        :root { --primary: #1e3a8a; --accent: #2563eb; --bg: #f4f7f6; --text: #334155; --border: #e2e8f0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header { background: #fff; padding: 30px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .header-text h1 { margin: 0 0 5px 0; color: var(--primary); font-size: 1.8rem; }
+        .header-text p { margin: 0; color: #64748b; }
+        .erp-promo { background: #fffbeb; border: 1px solid #fde68a; padding: 15px 20px; border-radius: 8px; font-size: 0.9rem; max-width: 350px; }
+        .erp-promo strong { color: #b45309; display: block; margin-bottom: 5px; }
+        .erp-promo a { color: #b45309; font-weight: 700; }
+        .filters { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filters input, .filters select { padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; flex-grow: 1; min-width: 200px; outline: none; transition: 0.2s; }
+        .filters input:focus, .filters select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .count-badge { display: inline-block; background: #e0e7ff; color: #3730a3; padding: 4px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; margin-bottom: 12px; }
+        .table-container { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f8fafc; padding: 15px; font-weight: 600; color: #64748b; border-bottom: 2px solid var(--border); white-space: nowrap; }
+        td { padding: 14px 15px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:hover { background: #f1f5f9; }
+        tr:last-child td { border-bottom: none; }
+        .company-name { font-weight: 700; color: var(--primary); font-size: 1rem; }
+        .inn { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 5px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+        .badge-maf      { background: #dcfce7; color: #166534; }
+        .badge-beton    { background: #fee2e2; color: #991b1b; }
+        .badge-build    { background: #e0e7ff; color: #3730a3; }
+        .badge-metal    { background: #fef3c7; color: #92400e; }
+        .badge-santech  { background: #cffafe; color: #0e7490; }
+        .badge-electro  { background: #fce7f3; color: #9d174d; }
+        .stars { color: #f59e0b; letter-spacing: -1px; font-size: 0.9rem; }
+        .btn-lock { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; font-size: 0.85rem; transition: 0.2s; white-space: nowrap; }
+        .btn-lock:hover { background: var(--primary); transform: translateY(-1px); }
+        .empty-state { text-align: center; padding: 40px; color: #64748b; display: none; }
+        @media (max-width: 768px) { .header { flex-direction: column; align-items: flex-start; } }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <div class="header-text">
+            <h1>📋 Реестр надёжных поставщиков</h1>
+            <p>Открытая база проверенных производителей и дистрибьюторов для смет и закупок.</p>
+        </div>
+        <div class="erp-promo">
+            <strong>🔒 Хотите автоматизировать запросы?</strong>
+            Собирайте коммерческие предложения и формируйте КАЦ в один клик. <a href="https://example.com" target="_blank">Попробовать ERP →</a>
+        </div>
+    </div>
+
+    <div class="filters">
+        <input type="text" id="searchInput" placeholder="Поиск по названию, ИНН или городу...">
+        <select id="categoryFilter">
+            <option value="all">Все товарные группы</option>
+            <option value="Благоустройство и МАФы">Благоустройство и МАФы</option>
+            <option value="Бетон и растворы">Бетон и растворы</option>
+            <option value="Общестроительные материалы">Общестроительные материалы</option>
+            <option value="Металлопрокат">Металлопрокат</option>
+            <option value="Сантехника и трубы">Сантехника и трубы</option>
+            <option value="Электрика и кабель">Электрика и кабель</option>
+        </select>
+        <select id="regionFilter">
+            <option value="all">Все регионы</option>
+            <option value="Москва">Москва</option>
+            <option value="Санкт-Петербург">Санкт-Петербург</option>
+            <option value="Новосибирск">Новосибирск</option>
+            <option value="Екатеринбург">Екатеринбург</option>
+            <option value="Краснодар">Краснодар</option>
+            <option value="Приморский край">Приморский край</option>
+            <option value="Вся Россия">Вся Россия</option>
+        </select>
+    </div>
+
+    <div id="countBadge" class="count-badge">Найдено: 15 поставщиков</div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Компания</th>
+                    <th>Товарная группа</th>
+                    <th>Регион</th>
+                    <th>Рейтинг</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState">Поставщики по вашему запросу не найдены.</div>
+    </div>
+</div>
+
+<script>
+var suppliers = [
+    { name: 'ГК "Стройпартнёр"',        inn: 'ИНН 7701234501', category: 'Общестроительные материалы', region: 'Москва',          stars: 5, badgeClass: 'badge-build'   },
+    { name: 'ООО "МеталлСервис"',        inn: 'ИНН 7810934521', category: 'Металлопрокат',              region: 'Санкт-Петербург', stars: 5, badgeClass: 'badge-metal'   },
+    { name: 'ЗАО "СибирьСтрой"',         inn: 'ИНН 5406781234', category: 'Общестроительные материалы', region: 'Новосибирск',     stars: 4, badgeClass: 'badge-build'   },
+    { name: 'ООО "УралМет"',             inn: 'ИНН 6670189234', category: 'Металлопрокат',              region: 'Екатеринбург',    stars: 4, badgeClass: 'badge-metal'   },
+    { name: 'АО "КубаньБетон"',          inn: 'ИНН 2308156781', category: 'Бетон и растворы',           region: 'Краснодар',       stars: 5, badgeClass: 'badge-beton'   },
+    { name: 'ООО "АкваТрейд"',           inn: 'ИНН 7743098712', category: 'Сантехника и трубы',         region: 'Москва',          stars: 4, badgeClass: 'badge-santech' },
+    { name: 'ООО "ЭлектроСнаб"',         inn: 'ИНН 7814567234', category: 'Электрика и кабель',         region: 'Санкт-Петербург', stars: 4, badgeClass: 'badge-electro' },
+    { name: 'ООО "Монолит-ДВ"',          inn: 'ИНН 2536189012', category: 'Бетон и растворы',           region: 'Приморский край',  stars: 4, badgeClass: 'badge-beton'   },
+    { name: 'ГК "РусМАФ"',              inn: 'ИНН 5012345678', category: 'Благоустройство и МАФы',     region: 'Вся Россия',      stars: 5, badgeClass: 'badge-maf'     },
+    { name: 'ООО "СтройМаркет Юг"',      inn: 'ИНН 2301876543', category: 'Общестроительные материалы', region: 'Краснодар',       stars: 3, badgeClass: 'badge-build'   },
+    { name: 'ЗАО "КабельГрупп"',         inn: 'ИНН 6162089321', category: 'Электрика и кабель',         region: 'Вся Россия',      stars: 5, badgeClass: 'badge-electro' },
+    { name: 'ООО "ТрубоСнаб"',           inn: 'ИНН 6674312890', category: 'Сантехника и трубы',         region: 'Екатеринбург',    stars: 4, badgeClass: 'badge-santech' },
+    { name: 'АО "Полипластик"',          inn: 'ИНН 7731234567', category: 'Сантехника и трубы',         region: 'Вся Россия',      stars: 5, badgeClass: 'badge-santech' },
+    { name: 'ООО "СибМеталл Трейд"',     inn: 'ИНН 5407123890', category: 'Металлопрокат',              region: 'Новосибирск',     stars: 4, badgeClass: 'badge-metal'   },
+    { name: 'ООО "ИгроПарк Рус"',        inn: 'ИНН 7743765432', category: 'Благоустройство и МАФы',     region: 'Вся Россия',      stars: 4, badgeClass: 'badge-maf'     }
+];
+
+function stars(n) {
+    var s = '';
+    for (var i = 0; i < 5; i++) s += i < n ? '★' : '☆';
+    return s;
+}
+
+var tableBody = document.getElementById('tableBody');
+var searchInput = document.getElementById('searchInput');
+var categoryFilter = document.getElementById('categoryFilter');
+var regionFilter = document.getElementById('regionFilter');
+var emptyState = document.getElementById('emptyState');
+var countBadge = document.getElementById('countBadge');
+
+function renderTable() {
+    var term = searchInput.value.toLowerCase();
+    var cat = categoryFilter.value;
+    var reg = regionFilter.value;
+
+    var filtered = suppliers.filter(function(s) {
+        var matchSearch = s.name.toLowerCase().indexOf(term) !== -1 || s.inn.toLowerCase().indexOf(term) !== -1 || s.region.toLowerCase().indexOf(term) !== -1;
+        var matchCat = cat === 'all' || s.category === cat;
+        var matchReg = reg === 'all' || s.region === reg;
+        return matchSearch && matchCat && matchReg;
+    });
+
+    tableBody.innerHTML = '';
+    countBadge.textContent = 'Найдено: ' + filtered.length + ' поставщик' + (filtered.length === 1 ? '' : filtered.length < 5 ? 'а' : 'ов');
+
+    if (filtered.length === 0) {
+        emptyState.style.display = 'block';
+    } else {
+        emptyState.style.display = 'none';
+        filtered.forEach(function(s) {
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td><div class="company-name">' + s.name + '</div><div class="inn">' + s.inn + '</div></td>' +
+                '<td><span class="badge ' + s.badgeClass + '">' + s.category + '</span></td>' +
+                '<td>' + s.region + '</td>' +
+                '<td><span class="stars">' + stars(s.stars) + '</span></td>' +
+                '<td><a href="https://example.com" target="_blank" class="btn-lock">✉️ Запросить КП</a></td>';
+            tableBody.appendChild(tr);
+        });
+    }
+}
+
+searchInput.addEventListener('input', renderTable);
+categoryFilter.addEventListener('change', renderTable);
+regionFilter.addEventListener('change', renderTable);
+renderTable();
+</script>
+</body>
+</html>
