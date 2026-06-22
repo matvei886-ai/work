@@ -1,0 +1,170 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>be1.ru</title>
+</head>
+<body>
+<p>&lt;!DOCTYPE html&gt;<br />
+&lt;html lang=&quot;ru&quot;&gt;<br />
+&lt;head&gt;<br />
+&nbsp; &nbsp; &lt;meta charset=&quot;UTF-8&quot;&gt;<br />
+&nbsp; &nbsp; &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;<br />
+&nbsp; &nbsp; &lt;title&gt;Рабочий стол ПТО: Единая система&lt;/title&gt;<br />
+&nbsp; &nbsp; &lt;style&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; body { font-family: &#39;Segoe UI&#39;, Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .header { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .header h2 { margin: 0; font-size: 22px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .card.full-width { grid-column: span 2; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; h3 { margin-top: 0; color: #34495e; font-size: 18px; border-bottom: 2px solid #3498db; padding-bottom: 8px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; p.subtitle { font-size: 13px; color: #7f8c8d; margin-top: -5px; margin-bottom: 15px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; ul { padding-left: 20px; margin: 10px 0; font-size: 14px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; li { margin-bottom: 5px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; label { font-weight: bold; font-size: 14px; display: block; margin-top: 15px; margin-bottom: 5px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; input, select, textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; textarea { resize: vertical; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; button { background: #3498db; color: white; border: none; padding: 12px 15px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 15px; font-size: 15px; font-weight: bold; transition: 0.2s; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; button:hover { background: #2980b9; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; button.btn-green { background: #27ae60; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; button.btn-green:hover { background: #219a52; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .result-box { display: none; margin-top: 20px; border: 1px solid #27ae60; border-radius: 6px; overflow: hidden; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .result-header { background: #27ae60; color: white; padding: 10px 15px; font-weight: bold; font-size: 15px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .result-content { padding: 15px; background: #e8f8f5; line-height: 1.6; font-size: 15px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .highlight { font-weight: bold; color: #2980b9; background: #d6eaf8; padding: 2px 4px; border-radius: 3px; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .loader { display: none; text-align: center; color: #7f8c8d; font-size: 14px; margin-top: 15px; font-style: italic; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .warning { background: #fdf2e9; border-left: 4px solid #e67e22; padding: 10px 15px; font-size: 13px; margin-top: 15px; color: #d35400; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .warning strong { color: #e67e22; }<br />
+&nbsp; &nbsp; &lt;/style&gt;<br />
+&lt;/head&gt;<br />
+&lt;body&gt;</p>
+
+<p>&lt;div class=&quot;header&quot;&gt;<br />
+&nbsp; &nbsp; &lt;h2&gt;Единый пульт Инженера ПТО&lt;/h2&gt;<br />
+&nbsp; &nbsp; &lt;div style=&quot;font-size: 14px; opacity: 0.8;&quot;&gt;Объект: ЖК &laquo;Горизонт&raquo; | Пользователь: Инженер&lt;/div&gt;<br />
+&lt;/div&gt;</p>
+
+<p>&lt;div class=&quot;grid&quot;&gt;<br />
+&nbsp; &nbsp; &lt;div class=&quot;card&quot;&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;h3&gt;1. База (Смета &amp;rarr; График)&lt;/h3&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;p class=&quot;subtitle&quot;&gt;Выгрузка из проектной документации. У каждой позиции есть уникальный ID для сквозного учета.&lt;/p&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;ul id=&quot;estimateList&quot;&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;li&gt;&lt;strong&gt;ID-104:&lt;/strong&gt; Бетонирование фундаментной плиты (200 м&sup3;)&lt;/li&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;li&gt;&lt;strong&gt;ID-105:&lt;/strong&gt; Армирование стен подвала (15 т)&lt;/li&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;/ul&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;button onclick=&quot;alert(&#39;Данные из сметы успешно импортированы в справочник суточных заданий.&#39;)&quot;&gt;Сформировать план на день &amp;rarr;&lt;/button&gt;<br />
+&nbsp; &nbsp; &lt;/div&gt;</p>
+
+<p>&nbsp; &nbsp; &lt;div class=&quot;card&quot;&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;h3&gt;2. Задание на участок (для Прораба)&lt;/h3&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;p class=&quot;subtitle&quot;&gt;Интерфейс мобильного приложения прораба (без сметных цен).&lt;/p&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;label&gt;Вид работ из плана:&lt;/label&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;select&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;option value=&quot;ID-104&quot;&gt;Бетонирование фундаментной плиты&lt;/option&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;option value=&quot;ID-105&quot;&gt;Армирование стен подвала&lt;/option&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;/select&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;label&gt;Плановый объем на сегодня:&lt;/label&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;input type=&quot;number&quot; placeholder=&quot;Например: 45&quot;&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;button class=&quot;btn-green&quot; onclick=&quot;alert(&#39;Задание отправлено на планшет прораба участка.&#39;)&quot;&gt;Отправить на участок&lt;/button&gt;<br />
+&nbsp; &nbsp; &lt;/div&gt;</p>
+
+<p>&nbsp; &nbsp; &lt;div class=&quot;card full-width&quot;&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;h3&gt;3. Нейро-конвертер факта в ОЖР (КС-6а)&lt;/h3&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;p class=&quot;subtitle&quot;&gt;Перевод сообщений с площадки в строгие ГОСТ-формулировки.&lt;/p&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;label&gt;Сырое сообщение или аудио-расшифровка от прораба:&lt;/label&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;textarea id=&quot;rawInput&quot; rows=&quot;4&quot; placeholder=&quot;Вставьте текст... Например: Михалыч, мы сегодня залили плиту во второй секции, уложили кубов 30. Еще арматуру связали на колоннах, тонн 5 ушло.&quot;&gt;&lt;/textarea&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;button onclick=&quot;processText()&quot;&gt;Сгенерировать запись в журнал&lt;/button&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;div id=&quot;loader&quot; class=&quot;loader&quot;&gt;Анализируем текст и подбираем строительные нормы... ⏳&lt;/div&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;div id=&quot;resultBox&quot; class=&quot;result-box&quot;&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;div class=&quot;result-header&quot;&gt;Сформированная запись для Общего журнала работ&lt;/div&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;div class=&quot;result-content&quot; id=&quot;resultContent&quot;&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;/div&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &lt;/div&gt;<br />
+&nbsp; &nbsp; &lt;/div&gt;<br />
+&lt;/div&gt;</p>
+
+<p>&lt;script&gt;<br />
+&nbsp; &nbsp; // Словарь строительного сленга (симуляция работы нейросети)<br />
+&nbsp; &nbsp; const slangDictionary = {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;залили&quot;: &quot;выполнено бетонирование&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;заливали&quot;: &quot;устройство монолитных конструкций&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;кубов&quot;: &quot;м&sup3;&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;куба&quot;: &quot;м&sup3;&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;арматуру связали&quot;: &quot;выполнено устройство арматурного каркаса&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;связали&quot;: &quot;вязка арматуры&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;тонн&quot;: &quot;т.&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;кинули кабель&quot;: &quot;произведена прокладка кабельной линии&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;повесили лотки&quot;: &quot;выполнен монтаж металлических кабельных лотков&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;метров&quot;: &quot;п.м.&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;выкопали&quot;: &quot;разработка грунта механизированным способом&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;закопали&quot;: &quot;обратная засыпка грунта&quot;,<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &quot;плиту&quot;: &quot;фундаментной плиты / плиты перекрытия&quot;<br />
+&nbsp; &nbsp; };</p>
+
+<p>&nbsp; &nbsp; function processText() {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; let rawText = document.getElementById(&#39;rawInput&#39;).value.toLowerCase();<br />
+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; if (!rawText.trim()) {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; alert(&quot;Пожалуйста, введите текст от прораба.&quot;);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; return;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; }</p>
+
+<p>&nbsp; &nbsp; &nbsp; &nbsp; document.getElementById(&#39;loader&#39;).style.display = &#39;block&#39;;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; document.getElementById(&#39;resultBox&#39;).style.display = &#39;none&#39;;</p>
+
+<p>&nbsp; &nbsp; &nbsp; &nbsp; // Имитация задержки обработки данных<br />
+&nbsp; &nbsp; &nbsp; &nbsp; setTimeout(() =&gt; {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let processedText = rawText;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let missingData = [];</p>
+
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // 1. Замена сленга<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; for (let [slang, official] of Object.entries(slangDictionary)) {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let regex = new RegExp(&quot;\\b&quot; + slang + &quot;\\b&quot;, &quot;gi&quot;);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; processedText = processedText.replace(regex, `&lt;span class=&quot;highlight&quot;&gt;${official}&lt;/span&gt;`);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }</p>
+
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // 2. Поиск объемов<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let hasNumbers = /\d+/.test(rawText);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if (!hasNumbers) {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; missingData.push(&quot;Точные объемы выполненных работ (м&sup3;, т, п.м.)&quot;);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }</p>
+
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // 3. Поиск осей и отметок<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if (!rawText.includes(&quot;осях&quot;) &amp;&amp; !rawText.includes(&quot;оси&quot;) &amp;&amp; !rawText.includes(&quot;отметке&quot;)) {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; missingData.push(&quot;Привязка к строительным осям и высотным отметкам&quot;);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }</p>
+
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Формирование HTML результата<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; let finalHtml = `<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;div style=&quot;margin-bottom: 10px;&quot;&gt;&lt;strong&gt;Формулировка:&lt;/strong&gt;&lt;/div&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;div&gt;${processedText}&lt;/div&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; `;</p>
+
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; // Добавление предупреждений, если не хватает данных<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if (missingData.length &gt; 0) {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; finalHtml += `<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;div class=&quot;warning&quot;&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;strong&gt;⚠️ Внимание ПТО!&lt;/strong&gt; Для корректной записи в ОЖР необходимо уточнить у прораба:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;ul style=&quot;margin-top: 5px; margin-bottom: 0; color: #333;&quot;&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ${missingData.map(item =&gt; `&lt;li&gt;${item}&lt;/li&gt;`).join(&#39;&#39;)}<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;/ul&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;/div&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; `;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }</p>
+
+<p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; document.getElementById(&#39;loader&#39;).style.display = &#39;none&#39;;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; document.getElementById(&#39;resultContent&#39;).innerHTML = finalHtml;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; document.getElementById(&#39;resultBox&#39;).style.display = &#39;block&#39;;</p>
+
+<p>&nbsp; &nbsp; &nbsp; &nbsp; }, 1000);<br />
+&nbsp; &nbsp; }<br />
+&lt;/script&gt;</p>
+
+<p>&lt;/body&gt;<br />
+&lt;/html&gt;</p>
+</body>
+</html>
