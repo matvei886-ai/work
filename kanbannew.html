@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Канбан Закупок | Трекер поставок</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#f1f5f9;--col:#e2e8f0;--card:#fff;
+  --text:#1e293b;--muted:#64748b;--muted2:#94a3b8;
+  --primary:#2563eb;--ok:#16a34a;--warn:#d97706;--danger:#dc2626;
+  --radius:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ===== ШАПКА ===== */
+header{
+  background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);
+  color:#fff;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;
+  flex-shrink:0;box-shadow:0 3px 12px rgba(37,99,235,.25);gap:12px;flex-wrap:wrap;
+}
+header h1{font-size:1.25rem;font-weight:800;display:flex;align-items:center;gap:8px;}
+header .hright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.stat-pill{background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;font-size:.78rem;font-weight:700;white-space:nowrap;}
+.btn-add-main{background:#f59e0b;color:#78350f;border:none;padding:9px 18px;border-radius:8px;font-weight:800;cursor:pointer;font-size:.88rem;font-family:inherit;transition:.15s;white-space:nowrap;}
+.btn-add-main:hover{background:#d97706;}
+
+/* ===== ДОСКА ===== */
+.board{display:flex;gap:14px;padding:14px;overflow-x:auto;flex-grow:1;align-items:flex-start;}
+.board::-webkit-scrollbar{height:8px;}
+.board::-webkit-scrollbar-track{background:#e2e8f0;border-radius:4px;}
+.board::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;}
+
+/* ===== КОЛОНКА ===== */
+.column{background:var(--col);min-width:290px;width:290px;border-radius:var(--radius);display:flex;flex-direction:column;max-height:100%;flex-shrink:0;overflow:hidden;}
+.col-header{padding:12px 14px;font-weight:700;font-size:.92rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,0,0,.06);}
+.col-count{background:#cbd5e1;color:#334155;padding:2px 9px;border-radius:12px;font-size:.78rem;font-weight:700;}
+.col-body{padding:10px;flex-grow:1;overflow-y:auto;min-height:120px;}
+.col-body::-webkit-scrollbar{width:4px;}
+.col-body::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px;}
+
+/* Полосы цветов колонок */
+#col-new .col-header{border-top:4px solid var(--muted);border-radius:var(--radius) var(--radius) 0 0;}
+#col-pay .col-header{border-top:4px solid var(--danger);border-radius:var(--radius) var(--radius) 0 0;}
+#col-wait .col-header{border-top:4px solid var(--warn);border-radius:var(--radius) var(--radius) 0 0;}
+#col-transit .col-header{border-top:4px solid var(--primary);border-radius:var(--radius) var(--radius) 0 0;}
+#col-done .col-header{border-top:4px solid var(--ok);border-radius:var(--radius) var(--radius) 0 0;}
+
+/* кнопка добавления в колонке */
+.btn-col-add{width:100%;border:1.5px dashed #94a3b8;background:transparent;color:var(--muted);font-size:.82rem;font-weight:600;padding:8px;border-radius:7px;cursor:pointer;font-family:inherit;transition:.15s;margin-top:4px;}
+.btn-col-add:hover{border-color:var(--primary);color:var(--primary);background:rgba(37,99,235,.05);}
+
+/* ===== КАРТОЧКА ===== */
+.card{background:var(--card);padding:13px;border-radius:9px;box-shadow:0 2px 6px rgba(0,0,0,.06);margin-bottom:9px;cursor:grab;transition:transform .1s,box-shadow .1s;border:1px solid #e2e8f0;position:relative;}
+.card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1);}
+.card:active{cursor:grabbing;}
+.card.dragging{opacity:.45;transform:scale(.96);}
+.c-top{display:flex;justify-content:space-between;margin-bottom:6px;font-size:.76rem;color:var(--muted);}
+.c-title{font-weight:800;margin-bottom:5px;font-size:.95rem;color:#0f172a;}
+.c-desc{font-size:.82rem;color:#475569;margin-bottom:9px;line-height:1.45;}
+.c-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #f1f5f9;padding-top:8px;gap:6px;flex-wrap:wrap;}
+.badge-obj{padding:3px 8px;border-radius:5px;font-size:.72rem;font-weight:700;background:#dbeafe;color:#1e40af;}
+.c-price{font-weight:800;color:#0f172a;font-size:.92rem;white-space:nowrap;}
+.c-urgent{color:var(--danger);font-weight:700;font-size:.76rem;}
+.card-del{position:absolute;top:8px;right:8px;background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:.9rem;padding:2px 5px;border-radius:4px;line-height:1;transition:.15s;}
+.card-del:hover{background:#fee2e2;color:var(--danger);}
+.btn-next-step{width:100%;margin-top:9px;border:none;background:#f0f9ff;color:#0369a1;font-size:.78rem;font-weight:700;padding:7px 10px;border-radius:6px;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn-next-step:hover{background:#0369a1;color:#fff;}
+.btn-next-step:disabled{background:#f1f5f9;color:#cbd5e1;cursor:default;}
+#col-done .btn-next-step{background:#f0fdf4;color:#16a34a;}
+#col-done .btn-next-step:hover{background:#16a34a;color:#fff;}
+
+.col-body.drag-over{background:#cbd5e1;outline:2px dashed #94a3b8;outline-offset:-4px;border-radius:8px;}
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:26px 24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.mform-group{margin-bottom:14px;}
+.mform-group label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.mform-group input,.mform-group select,.mform-group textarea{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.92rem;font-family:inherit;color:var(--text);transition:.15s;}
+.mform-group input:focus,.mform-group select:focus,.mform-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.mform-group textarea{resize:vertical;min-height:70px;}
+.modal-btns{display:flex;gap:10px;margin-top:18px;}
+.btn-modal-save{flex:1;background:var(--primary);color:#fff;border:none;padding:12px;border-radius:8px;font-weight:800;cursor:pointer;font-family:inherit;font-size:.92rem;transition:.15s;}
+.btn-modal-save:hover{background:#1d4ed8;}
+.btn-modal-cancel{flex:1;background:#f1f5f9;color:var(--muted);border:none;padding:12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.92rem;}
+.btn-modal-cancel:hover{background:#e2e8f0;}
+
+/* ===== ТОСТЫ ===== */
+#toast-container{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:300;}
+.toast{background:#1e293b;color:#fff;padding:13px 16px;border-radius:9px;box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:.88rem;line-height:1.45;max-width:320px;animation:slideIn .3s ease-out;}
+.toast.toast-mail{border-left:4px solid var(--danger);}
+.toast.toast-sms{border-left:4px solid var(--primary);}
+.toast.toast-ok{border-left:4px solid var(--ok);}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* ===== ЛИД-МАГНИТ ===== */
+.lead-magnet{flex-shrink:0;padding:10px 22px;background:#fff;text-align:center;font-size:.82rem;color:var(--muted);border-top:1px solid #e2e8f0;}
+.lead-magnet a{color:var(--primary);font-weight:700;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📦 Канбан Закупок</h1>
+  <div class="hright">
+    <span class="stat-pill" id="stat-total">Всего счетов: 4</span>
+    <span class="stat-pill" id="stat-sum">Сумма: 1 415 500 ₽</span>
+    <button class="btn-add-main" onclick="openModal(null)">+ Новый счёт</button>
+  </div>
+</header>
+
+<div class="board">
+  <div class="column" id="col-new">
+    <div class="col-header"><span>📥 Счёт получен</span><span class="col-count">2</span></div>
+    <div class="col-body" data-status="new">
+      <div class="card" draggable="true" id="card-1" data-supplier="ГК Полипластик" data-obj="Детский сад, Уссурийск" data-price="340500" data-num="1024" data-date="18.06" data-urgent="false">
+        <button class="card-del" onclick="deleteCard('card-1')">✕</button>
+        <div class="c-top"><span>№ 1024 от 18.06</span><span></span></div>
+        <div class="c-title">ГК Полипластик</div>
+        <div class="c-desc">Трубы ПНД, фитинги, муфты (Спецификация ВК)</div>
+        <div class="c-footer"><span class="badge-obj">Детский сад, Уссурийск</span><span class="c-price">340 500 ₽</span></div>
+        <button class="btn-next-step" onclick="nextStep('card-1')">→ На оплату к буху</button>
+      </div>
+      <div class="card" draggable="true" id="card-2" data-supplier="АВ-ГРУПП" data-obj="Склад" data-price="45000" data-num="88" data-date="19.06" data-urgent="false">
+        <button class="card-del" onclick="deleteCard('card-2')">✕</button>
+        <div class="c-top"><span>№ 88 от 19.06</span><span></span></div>
+        <div class="c-title">АВ-ГРУПП</div>
+        <div class="c-desc">Утеплитель Технониколь (20 упаковок)</div>
+        <div class="c-footer"><span class="badge-obj" style="background:#f3f4f6;color:#4b5563;">Склад</span><span class="c-price">45 000 ₽</span></div>
+        <button class="btn-next-step" onclick="nextStep('card-2')">→ На оплату к буху</button>
+      </div>
+      <button class="btn-col-add" onclick="openModal('new')">+ Добавить счёт</button>
+    </div>
+  </div>
+
+  <div class="column" id="col-pay">
+    <div class="col-header"><span>💸 На оплате у бухa</span><span class="col-count">1</span></div>
+    <div class="col-body" data-status="pay">
+      <div class="card" draggable="true" id="card-3" data-supplier="ООО Монолит-ДВ" data-obj="Детский сад, Уссурийск" data-price="180000" data-num="45" data-date="17.06" data-urgent="true">
+        <button class="card-del" onclick="deleteCard('card-3')">✕</button>
+        <div class="c-top"><span>№ 45 от 17.06</span><span class="c-urgent">🔥 Срочно</span></div>
+        <div class="c-title">ООО "Монолит-ДВ"</div>
+        <div class="c-desc">Бетон В25 (Миксеры на завтра 08:00)</div>
+        <div class="c-footer"><span class="badge-obj">Детский сад, Уссурийск</span><span class="c-price">180 000 ₽</span></div>
+        <button class="btn-next-step" onclick="nextStep('card-3')">→ Оплачено, ждём поставку</button>
+      </div>
+      <button class="btn-col-add" onclick="openModal('pay')">+ Добавить счёт</button>
+    </div>
+  </div>
+
+  <div class="column" id="col-wait">
+    <div class="col-header"><span>⏳ Оплачено / Ждём</span><span class="col-count">1</span></div>
+    <div class="col-body" data-status="wait">
+      <div class="card" draggable="true" id="card-4" data-supplier="ROMANA (Романа)" data-obj="Детский сад, Уссурийск" data-price="850000" data-num="12/06" data-date="05.06" data-urgent="false">
+        <button class="card-del" onclick="deleteCard('card-4')">✕</button>
+        <div class="c-top"><span>№ 12/06 от 05.06</span><span>П/П №401</span></div>
+        <div class="c-title">ROMANA (Романа)</div>
+        <div class="c-desc">Игровой комплекс, качели, теневые навесы (Производство 14 дней)</div>
+        <div class="c-footer"><span class="badge-obj">Детский сад, Уссурийск</span><span class="c-price">850 000 ₽</span></div>
+        <button class="btn-next-step" onclick="nextStep('card-4')">→ Товар в пути</button>
+      </div>
+      <button class="btn-col-add" onclick="openModal('wait')">+ Добавить счёт</button>
+    </div>
+  </div>
+
+  <div class="column" id="col-transit">
+    <div class="col-header"><span>🚚 В пути</span><span class="col-count">0</span></div>
+    <div class="col-body" data-status="transit">
+      <button class="btn-col-add" onclick="openModal('transit')">+ Добавить счёт</button>
+    </div>
+  </div>
+
+  <div class="column" id="col-done">
+    <div class="col-header"><span>✅ На объекте</span><span class="col-count">0</span></div>
+    <div class="col-body" data-status="done">
+      <button class="btn-col-add" onclick="openModal('done')">+ Добавить счёт</button>
+    </div>
+  </div>
+</div>
+
+<div class="lead-magnet">
+  Хотите, чтобы счета сами переходили в «Оплачено» при проведении банковской выписки?
+  <a href="https://example.com" target="_blank">Попробовать интеграцию с ERP →</a>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>➕ Новый счёт</h3>
+    <div class="mform-group">
+      <label>Поставщик</label>
+      <input type="text" id="m-supplier" placeholder="ООО «Название»">
+    </div>
+    <div class="mform-group">
+      <label>Описание материалов</label>
+      <textarea id="m-desc" placeholder="Арматура А500С, 10т — объект №3"></textarea>
+    </div>
+    <div class="mform-group">
+      <label>Объект</label>
+      <input type="text" id="m-obj" placeholder="Школа на 500 мест, г. Краснодар">
+    </div>
+    <div class="mform-group">
+      <label>Номер счёта</label>
+      <input type="text" id="m-num" placeholder="45-П/2026">
+    </div>
+    <div class="mform-group">
+      <label>Сумма (₽)</label>
+      <input type="number" id="m-price" placeholder="150000">
+    </div>
+    <div class="mform-group">
+      <label>Колонка</label>
+      <select id="m-col">
+        <option value="new">📥 Счёт получен</option>
+        <option value="pay">💸 На оплате у буха</option>
+        <option value="wait">⏳ Оплачено / Ждём</option>
+        <option value="transit">🚚 В пути</option>
+        <option value="done">✅ На объекте</option>
+      </select>
+    </div>
+    <div class="mform-group">
+      <label>
+        <input type="checkbox" id="m-urgent" style="width:auto;margin-right:6px;">
+        Срочно 🔥
+      </label>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeModal()">Отмена</button>
+      <button class="btn-modal-save" onclick="saveCard()">Добавить счёт</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+(function(){
+"use strict";
+
+var cardCounter = 100;
+
+function $(id){ return document.getElementById(id); }
+
+// ===== DRAG & DROP =====
+function initCard(card){
+  card.addEventListener('dragstart', function(){
+    window._dragged = card;
+    setTimeout(function(){ card.classList.add('dragging'); }, 0);
+  });
+  card.addEventListener('dragend', function(){
+    card.classList.remove('dragging');
+    window._dragged = null;
+    updateStats();
+  });
+}
+
+document.querySelectorAll('.card').forEach(initCard);
+
+document.querySelectorAll('.col-body').forEach(function(col){
+  col.addEventListener('dragover', function(e){
+    e.preventDefault();
+    col.classList.add('drag-over');
+  });
+  col.addEventListener('dragleave', function(){
+    col.classList.remove('drag-over');
+  });
+  col.addEventListener('drop', function(e){
+    e.preventDefault();
+    col.classList.remove('drag-over');
+    var card = window._dragged;
+    if(!card) return;
+    var newStatus = col.getAttribute('data-status');
+    var oldStatus = card.parentElement.getAttribute('data-status');
+    if(newStatus !== oldStatus){
+      // Вставить перед кнопкой добавления если она есть
+      var addBtn = col.querySelector('.btn-col-add');
+      if(addBtn) col.insertBefore(card, addBtn);
+      else col.appendChild(card);
+      updateNextBtn(card, newStatus);
+      triggerAction(newStatus, card);
+    }
+    updateCounts();
+    updateStats();
+  });
+});
+
+// ===== СЧЁТЧИКИ ===== 
+function updateCounts(){
+  document.querySelectorAll('.column').forEach(function(col){
+    var count = col.querySelectorAll('.card').length;
+    col.querySelector('.col-count').textContent = count;
+  });
+}
+
+function updateStats(){
+  var cards = document.querySelectorAll('.card');
+  var total = cards.length;
+  var sum = 0;
+  cards.forEach(function(c){
+    var p = parseFloat(c.getAttribute('data-price')) || 0;
+    sum += p;
+  });
+  $('stat-total').textContent = 'Счетов: ' + total;
+  $('stat-sum').textContent = 'Сумма: ' + sum.toLocaleString('ru-RU') + ' ₽';
+}
+
+// ===== УВЕДОМЛЕНИЯ =====
+function triggerAction(status, card){
+  var sup = card.getAttribute('data-supplier');
+  var obj = card.getAttribute('data-obj');
+  if(status === 'pay') showToast('📧 Бухгалтерия: счёт от ' + sup + ' по «' + obj + '» добавлен в реестр на оплату.', 'toast-mail');
+  else if(status === 'transit') showToast('📱 СМС прорабу: ожидайте поставку от ' + sup + ' на «' + obj + '». Подготовьте людей на разгрузку!', 'toast-sms');
+  else if(status === 'done') showToast('✅ Склад: материалы от ' + sup + ' оприходованы. Сформирован приходный ордер.', 'toast-ok');
+}
+
+function showToast(msg, cls){
+  var c = $('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast ' + cls;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){
+    t.style.transition = 'opacity .3s';
+    t.style.opacity = '0';
+    setTimeout(function(){ t.remove(); }, 300);
+  }, 5000);
+}
+
+// ===== МОДАЛКА =====
+window.openModal = function(colStatus){
+  $('m-supplier').value = '';
+  $('m-desc').value = '';
+  $('m-obj').value = '';
+  $('m-num').value = '';
+  $('m-price').value = '';
+  $('m-urgent').checked = false;
+  if(colStatus) $('m-col').value = colStatus;
+  $('modal-overlay').classList.add('show');
+  setTimeout(function(){ $('m-supplier').focus(); }, 100);
+};
+
+window.closeModal = function(){
+  $('modal-overlay').classList.remove('show');
+};
+
+$('modal-overlay').addEventListener('click', function(e){
+  if(e.target === this) closeModal();
+});
+
+window.saveCard = function(){
+  var supplier = $('m-supplier').value.trim();
+  var desc = $('m-desc').value.trim();
+  var obj = $('m-obj').value.trim();
+  var num = $('m-num').value.trim();
+  var price = parseFloat($('m-price').value) || 0;
+  var col = $('m-col').value;
+  var urgent = $('m-urgent').checked;
+
+  if(!supplier){ alert('Укажите поставщика.'); $('m-supplier').focus(); return; }
+
+  cardCounter++;
+  var id = 'card-' + cardCounter;
+  var today = new Date().toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'});
+
+  var card = document.createElement('div');
+  card.className = 'card';
+  card.draggable = true;
+  card.id = id;
+  card.setAttribute('data-supplier', supplier);
+  card.setAttribute('data-obj', obj || '—');
+  card.setAttribute('data-price', price);
+  card.setAttribute('data-num', num || '—');
+  card.setAttribute('data-date', today);
+  card.setAttribute('data-urgent', urgent ? 'true' : 'false');
+
+  card.innerHTML =
+    '<button class="card-del" onclick="deleteCard(\'' + id + '\')">✕</button>' +
+    '<div class="c-top"><span>' + (num ? '№ ' + num + ' от ' + today : 'от ' + today) + '</span>' +
+    (urgent ? '<span class="c-urgent">🔥 Срочно</span>' : '<span></span>') + '</div>' +
+    '<div class="c-title">' + escHtml(supplier) + '</div>' +
+    (desc ? '<div class="c-desc">' + escHtml(desc) + '</div>' : '') +
+    '<div class="c-footer">' +
+    '<span class="badge-obj">' + escHtml(obj || '—') + '</span>' +
+    '<span class="c-price">' + (price > 0 ? price.toLocaleString('ru-RU') + ' ₽' : '—') + '</span>' +
+    '</div>' +
+    '<button class="btn-next-step" onclick="nextStep(\'' + id + '\')">' + (STEP_LABELS[col] || '→ Следующий этап') + '</button>';
+
+  initCard(card);
+
+  var colBody = document.querySelector('.col-body[data-status="' + col + '"]');
+  var addBtn = colBody.querySelector('.btn-col-add');
+  if(addBtn) colBody.insertBefore(card, addBtn);
+  else colBody.appendChild(card);
+
+  closeModal();
+  updateCounts();
+  updateStats();
+  showToast('✅ Счёт от ' + supplier + ' добавлен на доску.', 'toast-ok');
+};
+
+// ===== СЛЕДУЮЩИЙ ЭТАП =====
+var STEPS = ['new','pay','wait','transit','done'];
+var STEP_LABELS = {
+  'new':     '→ На оплату к буху',
+  'pay':     '→ Оплачено, ждём поставку',
+  'wait':    '→ Товар в пути',
+  'transit': '→ Принято на объекте',
+  'done':    '✅ Завершено'
+};
+
+window.nextStep = function(id){
+  var card = $(id);
+  if(!card) return;
+  var colBody = card.parentElement;
+  var curStatus = colBody.getAttribute('data-status');
+  var curIdx = STEPS.indexOf(curStatus);
+  if(curIdx < 0 || curIdx >= STEPS.length - 1) return;
+  var nextStatus = STEPS[curIdx + 1];
+  var nextColBody = document.querySelector('.col-body[data-status="' + nextStatus + '"]');
+  if(!nextColBody) return;
+
+  var addBtn = nextColBody.querySelector('.btn-col-add');
+  if(addBtn) nextColBody.insertBefore(card, addBtn);
+  else nextColBody.appendChild(card);
+
+  // обновляем текст кнопки следующего шага
+  updateNextBtn(card, nextStatus);
+
+  triggerAction(nextStatus, card);
+  updateCounts();
+  updateStats();
+
+  // небольшая анимация
+  card.style.transition = 'transform .25s,box-shadow .25s';
+  card.style.transform = 'scale(1.03)';
+  setTimeout(function(){ card.style.transform = ''; }, 250);
+};
+
+function updateNextBtn(card, status){
+  var btn = card.querySelector('.btn-next-step');
+  if(!btn) return;
+  if(status === 'done'){
+    btn.textContent = '✅ Завершено';
+    btn.disabled = true;
+  } else {
+    btn.disabled = false;
+    btn.textContent = STEP_LABELS[status] || '→ Следующий этап';
+    btn.onclick = function(){ nextStep(card.id); };
+  }
+}
+
+
+window.deleteCard = function(id){
+  var card = $(id);
+  if(!card) return;
+  if(!confirm('Удалить карточку «' + card.getAttribute('data-supplier') + '»?')) return;
+  card.remove();
+  updateCounts();
+  updateStats();
+};
+
+function escHtml(s){
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+updateStats();
+})();
+</script>
+</body>
+</html>
