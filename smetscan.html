@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Смета-Скан | OCR спецификаций PDF в Excel</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --primary:#4f46e5;--primary-dark:#4338ca;--accent:#10b981;--accent-dark:#059669;
+  --bg:#f1f5f9;--surface:#fff;--surface2:#f8fafc;
+  --text:#1e293b;--text2:#64748b;--text3:#94a3b8;
+  --border:#e2e8f0;--radius:14px;
+  --ok:#16a34a;--ok-bg:#dcfce7;--warn:#d97706;--warn-bg:#fef3c7;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);padding:16px;line-height:1.5;-webkit-text-size-adjust:100%;}
+.container{max-width:1200px;margin:0 auto;}
+
+/* ===== ШАПКА ===== */
+header{
+  background:linear-gradient(135deg,#312e81 0%,#4f46e5 60%,#6366f1 100%);
+  color:#fff;border-radius:var(--radius);padding:24px 22px;margin-bottom:18px;
+  box-shadow:0 6px 18px rgba(79,70,229,.25);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;
+}
+header .htext h1{font-size:1.45rem;font-weight:800;margin-bottom:5px;display:flex;align-items:center;gap:10px;}
+header .htext p{font-size:.88rem;opacity:.85;}
+header .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:700;margin-bottom:8px;}
+
+/* ===== РАБОЧАЯ ЗОНА ===== */
+.workspace{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:900px){.workspace{grid-template-columns:1fr;}}
+
+.panel{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
+.panel-title{font-size:1rem;font-weight:800;color:var(--primary);margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--bg);display:flex;align-items:center;gap:8px;}
+.panel-title .snum{width:24px;height:24px;border-radius:6px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:800;flex-shrink:0;}
+
+/* ===== ЗАГРУЗКА ===== */
+.upload-zone{
+  border:2px dashed #a5b4fc;background:#eef2ff;border-radius:10px;
+  padding:20px;text-align:center;cursor:pointer;transition:.15s;margin-bottom:14px;display:block;
+}
+.upload-zone:hover,.upload-zone.has-file{border-color:var(--primary);background:#e0e7ff;}
+.upload-zone .uz-icon{font-size:1.8rem;margin-bottom:6px;}
+.upload-zone .uz-text{font-size:.88rem;font-weight:700;color:var(--primary);}
+.upload-zone .uz-sub{font-size:.75rem;color:var(--text2);}
+#pdf-upload{display:none;}
+
+/* ===== PDF CANVAS ===== */
+.pdf-wrapper{position:relative;overflow:auto;background:#e2e8f0;border-radius:10px;min-height:340px;max-height:560px;display:flex;justify-content:center;align-items:flex-start;}
+#pdf-canvas{border:1px solid #94a3b8;cursor:crosshair;display:block;}
+#selection-box{position:absolute;border:2px dashed #ef4444;background:rgba(239,68,68,.15);pointer-events:none;display:none;}
+
+/* ===== КНОПКИ ===== */
+.btn{display:flex;justify-content:center;align-items:center;gap:8px;border:none;padding:12px 18px;font-size:.92rem;font-weight:800;border-radius:9px;cursor:pointer;font-family:inherit;transition:.15s;width:100%;margin-top:12px;}
+.btn:active{transform:scale(.99);}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(79,70,229,.22);}
+.btn-primary:hover{background:var(--primary-dark);}
+.btn-primary:disabled{background:#cbd5e1;box-shadow:none;cursor:not-allowed;}
+.btn-excel{background:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(16,185,129,.22);}
+.btn-excel:hover{background:var(--accent-dark);}
+.btn-excel:disabled{background:#cbd5e1;box-shadow:none;cursor:not-allowed;}
+
+/* ===== СТАТУС ===== */
+#status{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:.85rem;font-weight:700;text-align:center;display:none;}
+.status-loading{background:var(--warn-bg);color:#92400e;}
+.status-success{background:var(--ok-bg);color:#166534;}
+.status-error{background:#fee2e2;color:#991b1b;}
+
+/* ===== ТАБЛИЦА ===== */
+.table-hint{font-size:.78rem;color:var(--text2);margin-bottom:10px;}
+.table-container{overflow:auto;max-height:460px;border:1px solid var(--border);border-radius:9px;margin-top:8px;}
+table{width:100%;border-collapse:collapse;font-size:.83rem;min-width:400px;}
+th{background:var(--surface2);padding:9px 10px;font-weight:700;color:var(--text2);border-bottom:2px solid var(--border);position:sticky;top:0;text-align:left;}
+td{border-bottom:1px solid var(--border);padding:8px 10px;background:var(--surface);}
+td[contenteditable="true"]:focus{outline:2px solid var(--primary);background:#fef08a;}
+.empty-td{text-align:center;color:var(--text3);padding:30px;font-style:italic;}
+
+/* ===== СЧЁТЧИК / PAYWALL ===== */
+.usage-counter{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-top:12px;}
+.usage-counter .uc-label{font-size:.8rem;font-weight:700;color:#374151;}
+.uc-dots{display:flex;gap:6px;}
+.uc-dot{width:13px;height:13px;border-radius:50%;background:#e2e8f0;border:1.5px solid #cbd5e1;}
+.uc-dot.used{background:#94a3b8;border-color:#94a3b8;}
+.uc-dot.current{background:var(--ok);border-color:var(--ok);}
+.usage-counter.warn{background:var(--warn-bg);border-color:#fde68a;}
+.usage-counter.warn .uc-label{color:#92400e;}
+
+.gen-status{font-size:.78rem;color:var(--text2);text-align:center;margin-top:6px;min-height:1em;}
+.gen-status.ok{color:var(--ok);font-weight:700;}
+
+.paywall-block{display:none;}
+.paywall-block.show{display:block;margin-top:12px;}
+.paywall-inner{background:linear-gradient(135deg,#1e1b4b,#312e81);border-radius:12px;padding:22px 18px;color:#fff;text-align:center;}
+.paywall-inner .pw-icon{font-size:2rem;margin-bottom:7px;}
+.paywall-inner .pw-eyebrow{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#a5b4fc;margin-bottom:7px;}
+.paywall-inner h3{font-size:1.05rem;margin-bottom:7px;}
+.paywall-inner p{font-size:.83rem;opacity:.85;margin-bottom:14px;line-height:1.5;}
+.paywall-inner a{display:inline-block;background:#f59e0b;color:#78350f;font-weight:800;text-decoration:none;padding:11px 24px;border-radius:7px;}
+.paywall-inner .pw-sub{font-size:.7rem;color:#64748b;margin-top:9px;}
+
+/* ===== ЛИД-МАГНИТ ===== */
+.lead-magnet{background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border-radius:var(--radius);padding:20px 22px;text-align:center;margin-top:16px;}
+.lead-magnet p{font-size:.9rem;opacity:.9;margin-bottom:10px;}
+.lead-magnet a{color:#a5b4fc;font-weight:700;text-decoration:none;}
+.lead-magnet a:hover{color:#c7d2fe;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="htext">
+    <span class="badge">🔍 OCR для сметчиков</span>
+    <h1>Смета-Скан</h1>
+    <p>Выделите таблицу на PDF-чертеже — нейросеть перенесёт её в редактируемый Excel</p>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <!-- ЛЕВАЯ ПАНЕЛЬ: PDF + выделение -->
+  <div class="panel">
+    <div class="panel-title"><span class="snum">1</span> Загрузите PDF и выделите таблицу</div>
+
+    <label class="upload-zone" id="upload-zone" for="pdf-upload">
+      <div class="uz-icon">📄</div>
+      <div class="uz-text" id="uz-text">Загрузить PDF-чертёж</div>
+      <div class="uz-sub" id="uz-sub">Нажмите или перетащите файл</div>
+    </label>
+    <input type="file" id="pdf-upload" accept="application/pdf">
+
+    <div class="pdf-wrapper" id="pdf-wrapper">
+      <canvas id="pdf-canvas"></canvas>
+      <div id="selection-box"></div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-recognize" disabled>🤖 Распознать выделенное (OCR)</button>
+    <div id="status"></div>
+  </div>
+
+  <!-- ПРАВАЯ ПАНЕЛЬ: результат + экспорт -->
+  <div class="panel">
+    <div class="panel-title"><span class="snum">2</span> Проверка и экспорт в Excel</div>
+    <div class="table-hint">Нажмите на любую ячейку, чтобы исправить ошибку OCR перед выгрузкой.</div>
+
+    <div class="table-container">
+      <table id="result-table">
+        <thead>
+          <tr><th>№</th><th>Наименование позиции</th><th>Ед. изм.</th><th>Кол-во</th></tr>
+        </thead>
+        <tbody id="result-tbody">
+          <tr><td colspan="4" class="empty-td">Таблица появится здесь после распознавания…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- СЧЁТЧИК -->
+    <div class="usage-counter" id="usage-counter">
+      <span class="uc-label" id="uc-label">Бесплатно: 3 выгрузки Excel</span>
+      <div class="uc-dots" id="uc-dots">
+        <div class="uc-dot current"></div>
+        <div class="uc-dot"></div>
+        <div class="uc-dot"></div>
+      </div>
+    </div>
+
+    <div id="excel-area">
+      <button class="btn btn-excel" id="btn-export" disabled>📊 Скачать таблицу (.xlsx)</button>
+      <div class="gen-status" id="gen-status"></div>
+    </div>
+
+    <div class="paywall-block" id="paywall">
+      <div class="paywall-inner">
+        <div class="pw-icon">🔒</div>
+        <div class="pw-eyebrow">Бесплатный лимит исчерпан</div>
+        <h3>Вы использовали все 3 бесплатные выгрузки</h3>
+        <p>PRO-версия — безлимитный экспорт, автоматическое определение колонок, пакетная обработка нескольких страниц и интеграция с ERP.</p>
+        <a href="https://example.com" target="_blank">Подключить PRO-доступ →</a>
+        <div class="pw-sub">Лимит привязан к браузеру. Очистка данных сайта сбрасывает счётчик.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lead-magnet">
+  <p>Устали делать КАЦ вручную? Загрузите этот Excel в нашу строительную ERP — она автоматически соберёт цены поставщиков.</p>
+  <a href="https://example.com" target="_blank">Попробовать ERP-систему →</a>
+</div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+var FREE_LIMIT = 3;
+var STORAGE_KEY = "smetaScan_xlsxCount";
+
+var pdfDoc = null;
+var canvas = document.getElementById('pdf-canvas');
+var ctx = canvas.getContext('2d');
+var selectionBox = document.getElementById('selection-box');
+var btnRecognize = document.getElementById('btn-recognize');
+var btnExport = document.getElementById('btn-export');
+var statusDiv = document.getElementById('status');
+var resultTbody = document.getElementById('result-tbody');
+var isDrawing = false;
+var startX = 0, startY = 0;
+var currentRect = {x:0,y:0,w:0,h:0};
+
+function $(id){ return document.getElementById(id); }
+function getCount(){ try{ var v=parseInt(localStorage.getItem(STORAGE_KEY),10); return isNaN(v)?0:v; }catch(e){ return 0; } }
+function setCount(n){ try{ localStorage.setItem(STORAGE_KEY,String(n)); }catch(e){} }
+
+// ===== ЗАГРУЗКА PDF =====
+$('pdf-upload').addEventListener('change', function(e){
+  var file = e.target.files[0];
+  if(!file || file.type !== 'application/pdf'){ alert('Загрузите PDF файл.'); return; }
+  $('uz-text').textContent = file.name;
+  $('uz-sub').textContent = 'Файл загружен';
+  $('upload-zone').classList.add('has-file');
+  var reader = new FileReader();
+  reader.onload = function(){
+    var arr = new Uint8Array(this.result);
+    pdfjsLib.getDocument(arr).promise.then(function(pdf){
+      pdfDoc = pdf;
+      renderPage(1);
+    });
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function renderPage(num){
+  pdfDoc.getPage(num).then(function(page){
+    var vp = page.getViewport({scale:1.5});
+    canvas.height = vp.height;
+    canvas.width = vp.width;
+    page.render({canvasContext:ctx, viewport:vp}).promise.then(initSelection);
+  });
+}
+
+// ===== ВЫДЕЛЕНИЕ =====
+function initSelection(){
+  canvas.addEventListener('mousedown', function(e){
+    isDrawing = true;
+    var r = canvas.getBoundingClientRect();
+    startX = e.clientX - r.left;
+    startY = e.clientY - r.top;
+    selectionBox.style.display = 'block';
+    selectionBox.style.left = startX + 'px';
+    selectionBox.style.top = startY + 'px';
+    selectionBox.style.width = '0';
+    selectionBox.style.height = '0';
+  });
+  canvas.addEventListener('mousemove', function(e){
+    if(!isDrawing) return;
+    var r = canvas.getBoundingClientRect();
+    var cx = e.clientX - r.left;
+    var cy = e.clientY - r.top;
+    currentRect.w = Math.abs(cx - startX);
+    currentRect.h = Math.abs(cy - startY);
+    currentRect.x = Math.min(startX, cx);
+    currentRect.y = Math.min(startY, cy);
+    selectionBox.style.left = currentRect.x + 'px';
+    selectionBox.style.top = currentRect.y + 'px';
+    selectionBox.style.width = currentRect.w + 'px';
+    selectionBox.style.height = currentRect.h + 'px';
+  });
+  window.addEventListener('mouseup', function(){
+    if(isDrawing){
+      isDrawing = false;
+      if(currentRect.w > 50 && currentRect.h > 50) btnRecognize.disabled = false;
+    }
+  });
+}
+
+// ===== OCR =====
+btnRecognize.addEventListener('click', function(){
+  var tmp = document.createElement('canvas');
+  tmp.width = currentRect.w;
+  tmp.height = currentRect.h;
+  tmp.getContext('2d').drawImage(canvas, currentRect.x, currentRect.y, currentRect.w, currentRect.h, 0, 0, currentRect.w, currentRect.h);
+  var imgUrl = tmp.toDataURL('image/png');
+
+  statusDiv.style.display = 'block';
+  statusDiv.className = 'status-loading';
+  statusDiv.textContent = '⏳ Нейросеть распознаёт русский текст… (до 15 сек)';
+  btnRecognize.disabled = true;
+
+  Tesseract.recognize(imgUrl, 'rus+eng', {logger: function(m){ console.log(m); }})
+    .then(function(r){
+      statusDiv.className = 'status-success';
+      statusDiv.textContent = '✅ Таблица успешно распознана!';
+      parseTextToTable(r.data.text);
+      btnRecognize.disabled = false;
+      if(getCount() < FREE_LIMIT) btnExport.disabled = false;
+    })
+    .catch(function(err){
+      statusDiv.className = 'status-error';
+      statusDiv.textContent = '❌ Ошибка распознавания. Попробуйте другой фрагмент.';
+      btnRecognize.disabled = false;
+      console.error(err);
+    });
+});
+
+// ===== ПАРСИНГ =====
+function parseTextToTable(text){
+  resultTbody.innerHTML = '';
+  var lines = text.split('\n').filter(function(l){ return l.trim().length > 0; });
+  lines.forEach(function(line, idx){
+    var cols = line.split(/\s{2,}|\t/);
+    if(cols.length === 1){
+      var m = line.match(/(.+?)\s+(шт|м|кг|т|компл\.?)\s+(\d+[\.,]?\d*)/i);
+      if(m) cols = [idx+1, m[1], m[2], m[3]];
+      else cols = [idx+1, line, '', ''];
+    }
+    var tr = document.createElement('tr');
+    for(var i=0; i<4; i++){
+      var td = document.createElement('td');
+      td.textContent = cols[i] || '';
+      td.setAttribute('contenteditable', 'true');
+      tr.appendChild(td);
+    }
+    resultTbody.appendChild(tr);
+  });
+}
+
+// ===== ЭКСПОРТ =====
+btnExport.addEventListener('click', function(){
+  if(getCount() >= FREE_LIMIT){ renderUsageUI(); return; }
+  var wb = XLSX.utils.table_to_book(document.getElementById('result-table'), {sheet:'Спецификация'});
+  XLSX.writeFile(wb, 'Спецификация_СметаСкан.xlsx');
+  setCount(getCount() + 1);
+  var gs = $('gen-status');
+  gs.textContent = '✓ Файл скачан — откройте в Excel или Google Таблицах';
+  gs.className = 'gen-status ok';
+  renderUsageUI();
+});
+
+// ===== ЛИМИТ =====
+function renderUsageUI(){
+  var used = getCount();
+  var remaining = Math.max(0, FREE_LIMIT - used);
+  var counter = $('usage-counter');
+  var label = $('uc-label');
+  var dots = $('uc-dots');
+  var excelArea = $('excel-area');
+  var paywall = $('paywall');
+
+  dots.innerHTML = '';
+  for(var i=0; i<FREE_LIMIT; i++){
+    var dot = document.createElement('div');
+    dot.className = 'uc-dot';
+    if(i < used) dot.classList.add('used');
+    else if(i === used) dot.classList.add('current');
+    dots.appendChild(dot);
+  }
+
+  if(remaining <= 0){
+    counter.classList.add('warn');
+    label.textContent = 'Бесплатный лимит исчерпан';
+    excelArea.style.display = 'none';
+    paywall.classList.add('show');
+  } else {
+    counter.classList.remove('warn');
+    label.textContent = 'Бесплатно: осталось ' + remaining + ' из ' + FREE_LIMIT + ' выгрузок';
+    excelArea.style.display = 'block';
+    paywall.classList.remove('show');
+  }
+}
+
+renderUsageUI();
+})();
+</script>
+</body>
+</html>
