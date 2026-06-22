@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Авто-ОЖР | Электронный журнал работ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --primary:#0f766e;--primary-dark:#0d9488;--accent:#f59e0b;
+  --bg:#f0fdf4;--surface:#fff;--surface2:#f9fafb;
+  --text:#1f2937;--text2:#6b7280;--text3:#9ca3af;
+  --border:#d1d5db;--radius:12px;
+  --ok:#16a34a;--ok-bg:#dcfce7;--err:#dc2626;--err-bg:#fee2e2;--warn:#d97706;--warn-bg:#fef3c7;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);padding:16px;line-height:1.55;min-height:100vh;-webkit-text-size-adjust:100%;}
+.container{max-width:860px;margin:0 auto;}
+
+/* ===== ШАПКА ===== */
+header{
+  background:linear-gradient(135deg,#065f46 0%,#0f766e 50%,#14b8a6 100%);
+  color:#fff;border-radius:16px;padding:24px 22px;margin-bottom:18px;
+  box-shadow:0 6px 18px rgba(15,118,110,.25);
+}
+header .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:700;margin-bottom:10px;}
+header h1{font-size:1.5rem;font-weight:800;margin-bottom:5px;line-height:1.25;}
+header p{font-size:.88rem;opacity:.88;}
+
+/* ===== СТАТИСТИКА ===== */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.stat-card .snum{font-size:1.8rem;font-weight:900;color:var(--primary);line-height:1;}
+.stat-card .slabel{font-size:.72rem;color:var(--text2);font-weight:600;margin-top:4px;}
+
+/* ===== КАРТОЧКИ ===== */
+.card{background:var(--surface);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
+.card-title{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:800;color:#065f46;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--bg);}
+.card-title .step-num{width:26px;height:26px;border-radius:7px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;flex-shrink:0;}
+
+/* ===== ФОРМЫ ===== */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:.82rem;font-weight:700;color:#374151;}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.92rem;font-family:inherit;color:var(--text);background:var(--surface);transition:.15s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,118,110,.1);}
+textarea{resize:vertical;min-height:90px;}
+
+/* ===== КНОПКИ ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;padding:11px 18px;font-size:.9rem;font-weight:700;border-radius:9px;cursor:pointer;font-family:inherit;transition:.15s;}
+.btn:active{transform:scale(.99);}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(15,118,110,.22);}
+.btn-primary:hover{background:var(--primary-dark);}
+.btn-secondary{background:var(--surface2);color:#374151;border:1.5px solid var(--border);}
+.btn-voice{background:#ef4444;color:#fff;width:100%;margin-bottom:10px;}
+.btn-voice.recording{animation:pulse 1.5s infinite;}
+.btn-voice:hover{background:#dc2626;}
+.btn-save{background:var(--primary);color:#fff;width:100%;}
+.btn-print{background:var(--accent);color:#fff;width:100%;padding:14px;font-size:1rem;box-shadow:0 3px 10px rgba(245,158,11,.25);}
+.btn-print:hover{background:#d97706;}
+.btn-print:disabled{background:#cbd5e1;box-shadow:none;cursor:not-allowed;}
+@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.015);}100%{transform:scale(1);}}
+
+/* ===== WEATHER ROW ===== */
+.weather-row{display:flex;gap:8px;align-items:stretch;}
+.weather-row input{flex:1;}
+
+/* ===== ТАБЛИЦА ПРЕВЬЮ ===== */
+.table-wrap{overflow-x:auto;border-radius:9px;border:1px solid var(--border);}
+table.preview{width:100%;border-collapse:collapse;font-size:.83rem;min-width:580px;}
+table.preview th{background:var(--surface2);padding:10px 12px;font-weight:700;color:var(--text2);border-bottom:2px solid var(--border);text-align:left;}
+table.preview td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+table.preview tr:last-child td{border-bottom:none;}
+table.preview tr:hover{background:#f0fdf4;}
+.empty-log{text-align:center;padding:28px;color:var(--text3);font-style:italic;}
+
+/* ===== СЧЁТЧИК / PAYWALL ===== */
+.usage-counter{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:14px;}
+.usage-counter .uc-label{font-size:.82rem;font-weight:700;color:#374151;}
+.usage-counter .uc-dots{display:flex;gap:6px;}
+.uc-dot{width:14px;height:14px;border-radius:50%;background:#e2e8f0;border:1.5px solid #cbd5e1;}
+.uc-dot.used{background:#94a3b8;border-color:#94a3b8;}
+.uc-dot.current{background:var(--ok);border-color:var(--ok);}
+.usage-counter.warn{background:var(--warn-bg);border-color:#fde68a;}
+.usage-counter.warn .uc-label{color:#92400e;}
+
+.gen-status{font-size:.8rem;color:var(--text2);text-align:center;margin-top:8px;min-height:1em;}
+.gen-status.ok{color:var(--ok);font-weight:700;}
+
+.paywall-block{display:none;}
+.paywall-block.show{display:block;}
+.paywall-inner{background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:14px;padding:24px 20px;color:#fff;text-align:center;}
+.paywall-inner .pw-icon{font-size:2.2rem;margin-bottom:8px;}
+.paywall-inner .pw-eyebrow{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#5eead4;margin-bottom:8px;}
+.paywall-inner h3{font-size:1.15rem;margin-bottom:8px;}
+.paywall-inner p{font-size:.85rem;opacity:.85;margin-bottom:16px;line-height:1.55;}
+.paywall-inner a{display:inline-block;background:#f59e0b;color:#78350f;font-weight:800;text-decoration:none;padding:12px 28px;border-radius:7px;font-size:.95rem;}
+.paywall-inner .pw-sub{font-size:.72rem;color:#64748b;margin-top:10px;}
+
+/* ===== ЛИДМАГНИТ ===== */
+.lead-magnet{background:linear-gradient(135deg,#065f46,#0f766e);color:#fff;border-radius:14px;padding:22px;text-align:center;margin-top:8px;}
+.lead-magnet h3{font-size:1.1rem;margin-bottom:8px;}
+.lead-magnet p{font-size:.88rem;opacity:.88;margin-bottom:14px;line-height:1.5;}
+.lead-magnet a{display:inline-block;background:#f59e0b;color:#78350f;font-weight:800;text-decoration:none;padding:10px 22px;border-radius:7px;}
+
+/* ===== PRINT ===== */
+#print-area{display:none;}
+@media print{
+  body *{visibility:hidden;}
+  body{background:#fff;margin:0;padding:0;}
+  #print-area,#print-area *{visibility:visible;}
+  #print-area{position:absolute;left:0;top:0;width:100%;display:block;font-family:'Times New Roman',Times,serif;}
+  @page{size:A4 landscape;margin:15mm;}
+  .print-title{text-align:center;font-size:16pt;font-weight:bold;margin-bottom:5px;}
+  .print-subtitle{text-align:center;font-size:12pt;margin-bottom:20px;}
+  .print-table{width:100%;border-collapse:collapse;font-size:11pt;}
+  .print-table th,.print-table td{border:1px solid #000;padding:8px;text-align:left;vertical-align:top;}
+  .print-table th{background:#fff;text-align:center;font-weight:normal;}
+}
+
+@media(max-width:520px){
+  .form-row{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .stat-card:last-child{grid-column:span 2;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <span class="badge">🏗️ Для прорабов и инженеров ПТО</span>
+  <h1>Авто-ОЖР</h1>
+  <p>Голосовой журнал производства работ с автозаполнением погоды (аналог КС-6а)</p>
+</header>
+
+<!-- СТАТИСТИКА -->
+<div class="stats-row">
+  <div class="stat-card"><div class="snum" id="stat-total">0</div><div class="slabel">Всего записей</div></div>
+  <div class="stat-card"><div class="snum" id="stat-days">0</div><div class="slabel">Рабочих дней</div></div>
+  <div class="stat-card"><div class="snum" id="stat-words">0</div><div class="slabel">Слов в журнале</div></div>
+</div>
+
+<!-- ШАГ 1: ОБЪЕКТ -->
+<div class="card">
+  <div class="card-title"><span class="step-num">1</span> Настройки объекта</div>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="obj-name">Название объекта</label>
+      <input type="text" id="obj-name" placeholder="Школа на 500 мест, г. Владивосток" value="Школа на 500 мест">
+    </div>
+    <div class="form-group">
+      <label for="eng-name">Ответственный (ФИО)</label>
+      <input type="text" id="eng-name" placeholder="Иванов И.И." value="Иванов И.И.">
+    </div>
+  </div>
+</div>
+
+<!-- ШАГ 2: ЗАПИСЬ ЗА ДЕНЬ -->
+<div class="card">
+  <div class="card-title"><span class="step-num">2</span> Запись за день</div>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="entry-date">Дата</label>
+      <input type="date" id="entry-date">
+    </div>
+    <div class="form-group">
+      <label for="weather-data">Погода (автозаполнение)</label>
+      <div class="weather-row">
+        <input type="text" id="weather-data" placeholder="Нажмите «Запросить»">
+        <button class="btn btn-secondary" id="weather-btn" onclick="fetchWeather()">☁️ Запросить</button>
+      </div>
+    </div>
+  </div>
+  <div class="form-group" style="margin-bottom:14px;">
+    <label for="work-desc">Описание работ (нажмите микрофон и говорите)</label>
+    <button class="btn btn-voice" id="btn-dictate" onclick="startDictation()">🎤 Начать диктовку голосом</button>
+    <textarea id="work-desc" placeholder="Например: Произведено бетонирование ростверка в осях А-Б, объём 15 кубов. Выполнена вязка арматуры..."></textarea>
+  </div>
+  <button class="btn btn-save" onclick="saveEntry()">＋ Сохранить запись в журнал</button>
+</div>
+
+<!-- ШАГ 3: ПРЕВЬЮ -->
+<div class="card">
+  <div class="card-title"><span class="step-num">3</span> Предпросмотр журнала</div>
+  <div class="table-wrap">
+    <table class="preview">
+      <thead>
+        <tr>
+          <th style="width:12%">Дата</th>
+          <th style="width:22%">Погода</th>
+          <th style="width:58%">Описание работ</th>
+          <th style="width:8%"></th>
+        </tr>
+      </thead>
+      <tbody id="log-entries">
+        <tr><td colspan="4" class="empty-log">Записей пока нет — заполните форму выше.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:16px;">
+    <div class="usage-counter" id="usage-counter">
+      <span class="uc-label" id="uc-label">Бесплатно: 3 PDF-отчёта</span>
+      <div class="uc-dots" id="uc-dots">
+        <div class="uc-dot current"></div>
+        <div class="uc-dot"></div>
+        <div class="uc-dot"></div>
+      </div>
+    </div>
+
+    <div id="print-area-wrap">
+      <button class="btn btn-print" id="btn-print" onclick="generatePrint()">📄 Сформировать журнал (Печать / PDF)</button>
+      <div class="gen-status" id="gen-status"></div>
+    </div>
+
+    <div class="paywall-block" id="paywall">
+      <div class="paywall-inner">
+        <div class="pw-icon">🔒</div>
+        <div class="pw-eyebrow">Бесплатный лимит исчерпан</div>
+        <h3>Вы использовали все 3 бесплатные PDF-генерации</h3>
+        <p>PRO-версия — безлимитные отчёты, интеграция с Росгидрометом, выгрузка в Word и облачная синхронизация между прорабами и ПТО.</p>
+        <a href="https://example.com" target="_blank">Подключить PRO →</a>
+        <div class="pw-sub">Лимит привязан к этому браузеру. Очистка данных сайта обнуляет счётчик.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lead-magnet">
+  <h3>⚡ Нужна полная автоматизация?</h3>
+  <p>Интеграция с реальным API погоды, выгрузка в Word и облачная синхронизация между прорабами и ПТО.</p>
+  <a href="https://example.com" target="_blank">Подключить ERP-систему</a>
+</div>
+
+</div>
+
+<div id="print-area"></div>
+
+<script>
+(function(){
+"use strict";
+
+var FREE_LIMIT = 3;
+var STORAGE_KEY = "ojr_pdfCount";
+var journalLog = [];
+
+// ===== Утилиты =====
+function $(id){ return document.getElementById(id); }
+
+function getUsageCount(){
+  try{ var v=parseInt(localStorage.getItem(STORAGE_KEY),10); return isNaN(v)?0:v; }
+  catch(e){ return 0; }
+}
+function setUsageCount(n){
+  try{ localStorage.setItem(STORAGE_KEY,String(n)); }catch(e){}
+}
+
+// ===== Дата по умолчанию =====
+$('entry-date').valueAsDate = new Date();
+
+// ===== Погода =====
+window.fetchWeather = function(){
+  var weathers = [
+    "t: +18°C, Ясно, без осадков",
+    "t: +12°C, Пасмурно, мелкий дождь",
+    "t: +22°C, Переменная облачность",
+    "t: +5°C, Ветер 10 м/с, без осадков",
+    "t: +9°C, Облачно, возможна морось",
+  ];
+  $('weather-data').value = weathers[Math.floor(Math.random()*weathers.length)];
+  var btn = $('weather-btn');
+  btn.textContent = "✅ Получено";
+  setTimeout(function(){ btn.textContent = "☁️ Запросить"; }, 2000);
+};
+
+// ===== Диктовка =====
+window.startDictation = function(){
+  var btn = $('btn-dictate');
+  var textarea = $('work-desc');
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    alert("Ваш браузер не поддерживает голосовой ввод. Используйте Google Chrome или Яндекс.Браузер.");
+    return;
+  }
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = new SR();
+  rec.lang = 'ru-RU';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  rec.onstart = function(){
+    btn.classList.add('recording');
+    btn.textContent = "🛑 Идёт запись… (говорите)";
+  };
+  rec.onresult = function(e){
+    var t = e.results[0][0].transcript;
+    textarea.value = textarea.value ? textarea.value + " " + t : t;
+    textarea.value = textarea.value.charAt(0).toUpperCase() + textarea.value.slice(1) + ".";
+  };
+  rec.onerror = function(e){ alert("Ошибка микрофона: " + e.error); };
+  rec.onend = function(){
+    btn.classList.remove('recording');
+    btn.textContent = "🎤 Начать диктовку голосом";
+  };
+  rec.start();
+};
+
+// ===== Сохранение =====
+window.saveEntry = function(){
+  var date = $('entry-date').value;
+  var weather = $('weather-data').value;
+  var work = $('work-desc').value.trim();
+  if(!date || !work){ alert("Заполните дату и описание работ."); return; }
+  var d = new Date(date);
+  journalLog.push({
+    id: Date.now(),
+    date: d.toLocaleDateString('ru-RU'),
+    dateRaw: date,
+    weather: weather || 'Не указана',
+    work: work
+  });
+  renderTable();
+  updateStats();
+  $('weather-data').value = '';
+  $('work-desc').value = '';
+};
+
+// ===== Удаление =====
+window.deleteEntry = function(id){
+  journalLog = journalLog.filter(function(e){ return e.id !== id; });
+  renderTable();
+  updateStats();
+};
+
+// ===== Статистика =====
+function updateStats(){
+  $('stat-total').textContent = journalLog.length;
+  var days = {};
+  var words = 0;
+  journalLog.forEach(function(e){
+    days[e.dateRaw] = true;
+    words += e.work.split(/\s+/).filter(Boolean).length;
+  });
+  $('stat-days').textContent = Object.keys(days).length;
+  $('stat-words').textContent = words;
+}
+
+// ===== Таблица =====
+function renderTable(){
+  var tbody = $('log-entries');
+  tbody.innerHTML = '';
+  if(journalLog.length === 0){
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-log">Записей пока нет — заполните форму выше.</td></tr>';
+    return;
+  }
+  journalLog.forEach(function(entry){
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><strong>'+entry.date+'</strong></td>'+
+      '<td><small style="color:#6b7280;">'+entry.weather+'</small></td>'+
+      '<td style="line-height:1.5;">'+entry.work+'</td>'+
+      '<td style="text-align:center;"><button onclick="deleteEntry('+entry.id+')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.1rem;" title="Удалить">🗑</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// ===== Лимит / paywall =====
+function renderUsageUI(){
+  var used = getUsageCount();
+  var remaining = Math.max(0, FREE_LIMIT - used);
+  var counter = $('usage-counter');
+  var label = $('uc-label');
+  var dots = $('uc-dots');
+  var wrap = $('print-area-wrap');
+  var paywall = $('paywall');
+
+  dots.innerHTML = '';
+  for(var i=0; i<FREE_LIMIT; i++){
+    var dot = document.createElement('div');
+    dot.className = 'uc-dot';
+    if(i < used) dot.classList.add('used');
+    else if(i === used) dot.classList.add('current');
+    dots.appendChild(dot);
+  }
+
+  if(remaining <= 0){
+    counter.classList.add('warn');
+    label.textContent = 'Бесплатный лимит исчерпан';
+    wrap.style.display = 'none';
+    paywall.classList.add('show');
+  } else {
+    counter.classList.remove('warn');
+    label.textContent = 'Бесплатно: осталось ' + remaining + ' из ' + FREE_LIMIT + ' PDF-отчётов';
+    wrap.style.display = 'block';
+    paywall.classList.remove('show');
+  }
+}
+
+// ===== Генерация печати =====
+window.generatePrint = function(){
+  if(journalLog.length === 0){ alert("Журнал пуст. Добавьте хотя бы одну запись."); return; }
+  if(getUsageCount() >= FREE_LIMIT){ renderUsageUI(); return; }
+
+  var objName = $('obj-name').value || '________________';
+  var engName = $('eng-name').value || '________________';
+  var printArea = $('print-area');
+
+  var rowsHTML = '';
+  journalLog.forEach(function(entry){
+    rowsHTML +=
+      '<tr>'+
+      '<td>'+entry.date+'</td>'+
+      '<td>'+entry.work+'</td>'+
+      '<td>'+entry.weather+'</td>'+
+      '<td>'+engName+'<br><br><em>(подпись)</em></td>'+
+      '</tr>';
+  });
+
+  printArea.innerHTML =
+    '<div class="print-title">ОБЩИЙ ЖУРНАЛ РАБОТ (КС-6а)</div>'+
+    '<div class="print-subtitle">Раздел 3. Сведения о производстве работ</div>'+
+    '<div style="margin-bottom:10px;"><strong>Наименование объекта:</strong> '+objName+'</div>'+
+    '<table class="print-table">'+
+      '<thead><tr>'+
+        '<th style="width:10%">Дата выполнения работ</th>'+
+        '<th style="width:50%">Краткое описание работ и методы их выполнения</th>'+
+        '<th style="width:20%">Условия производства работ (температура, осадки)</th>'+
+        '<th style="width:20%">Должность, ФИО и подпись ответственного</th>'+
+      '</tr></thead>'+
+      '<tbody>'+rowsHTML+'</tbody>'+
+    '</table>';
+
+  window.print();
+
+  setUsageCount(getUsageCount() + 1);
+  var status = $('gen-status');
+  status.textContent = '✓ Журнал отправлен на печать';
+  status.className = 'gen-status ok';
+  renderUsageUI();
+};
+
+renderUsageUI();
+updateStats();
+})();
+</script>
+</body>
+</html>
