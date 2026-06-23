@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рабочий стол ПТО | Инструменты инженера</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --ink:#0f172a;--ink2:#334155;--ink3:#64748b;--ink4:#94a3b8;
+  --paper:#f8fafc;--paper2:#f1f5f9;--paper3:#e2e8f0;
+  --blue:#1d4ed8;--blue-l:#dbeafe;--blue-t:#bfdbfe;
+  --ok:#15803d;--ok-l:#dcfce7;
+  --warn:#b45309;--warn-l:#fef3c7;
+  --err:#dc2626;--err-l:#fee2e2;
+  --sidebar:#0f172a;--sidebar2:#1e293b;
+  --accent:#2563eb;
+  --radius:8px;
+}
+html,body{height:100%;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:15px;background:var(--paper);color:var(--ink);-webkit-text-size-adjust:100%;}
+body{display:flex;flex-direction:column;min-height:100vh;}
+
+/* ===== LAYOUT ===== */
+.app{display:flex;flex:1;min-height:0;}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--sidebar);color:#e2e8f0;
+  display:flex;flex-direction:column;padding:0;
+  border-right:1px solid #1e293b;
+}
+.sidebar-brand{padding:20px 18px 16px;border-bottom:1px solid #1e293b;}
+.sidebar-brand .sb-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#64748b;margin-bottom:4px;}
+.sidebar-brand h1{font-size:1.05rem;font-weight:800;color:#f1f5f9;line-height:1.25;}
+.sidebar-brand p{font-size:.72rem;color:#475569;margin-top:3px;}
+
+.sidebar-nav{padding:12px 8px;flex:1;}
+.nav-section{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#475569;padding:8px 10px 4px;}
+.nav-item{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:6px;
+  font-size:.84rem;font-weight:600;color:#94a3b8;cursor:pointer;transition:.12s;margin-bottom:2px;
+  border:none;background:none;width:100%;text-align:left;font-family:inherit;
+}
+.nav-item:hover{background:#1e293b;color:#e2e8f0;}
+.nav-item.active{background:#1d4ed8;color:#fff;}
+.nav-item .ni-icon{font-size:1rem;flex-shrink:0;width:20px;text-align:center;}
+
+.sidebar-footer{padding:12px 10px;border-top:1px solid #1e293b;}
+.usage-pill{background:#1e293b;border-radius:6px;padding:10px 12px;}
+.usage-pill .up-label{font-size:.7rem;color:#64748b;margin-bottom:6px;font-weight:600;}
+.usage-pill .up-dots{display:flex;gap:4px;margin-bottom:5px;}
+.up-dot{width:12px;height:12px;border-radius:50%;background:#334155;border:1.5px solid #475569;}
+.up-dot.used{background:#475569;border-color:#475569;}
+.up-dot.avail{background:#2563eb;border-color:#2563eb;}
+.usage-pill .up-text{font-size:.68rem;color:#475569;}
+
+/* ===== MAIN ===== */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;}
+
+.topbar{
+  background:#fff;border-bottom:1px solid var(--paper3);padding:14px 24px;
+  display:flex;justify-content:space-between;align-items:center;flex-shrink:0;
+}
+.topbar-title{font-size:1rem;font-weight:800;color:var(--ink);}
+.topbar-sub{font-size:.75rem;color:var(--ink3);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.obj-badge{background:var(--blue-l);color:var(--blue);padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700;}
+
+.content{flex:1;overflow-y:auto;padding:20px 24px;}
+
+/* ===== ПАНЕЛИ ВКЛАДОК ===== */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ===== СЕКЦИИ ===== */
+.section{margin-bottom:18px;}
+.section-label{font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--paper3);}
+
+/* ===== ФОРМЫ ===== */
+.fgroup{margin-bottom:12px;}
+.fgroup label{display:block;font-size:.78rem;font-weight:700;color:var(--ink2);margin-bottom:5px;}
+textarea,input[type="text"],input[type="number"],select{
+  width:100%;padding:9px 11px;border:1.5px solid var(--paper3);border-radius:var(--radius);
+  font-size:.9rem;font-family:inherit;color:var(--ink);background:#fff;transition:.12s;resize:vertical;
+}
+textarea{min-height:90px;}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+
+/* ===== КНОПКИ ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;padding:10px 16px;font-size:.88rem;font-weight:700;border-radius:var(--radius);cursor:pointer;font-family:inherit;transition:.12s;}
+.btn:active{transform:scale(.99);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-primary:disabled{background:#cbd5e1;cursor:not-allowed;}
+.btn-sm{padding:7px 12px;font-size:.8rem;}
+.btn-ghost{background:transparent;color:var(--ink3);border:1.5px solid var(--paper3);}
+.btn-ghost:hover{background:var(--paper2);}
+
+/* ===== РЕЗУЛЬТАТ ===== */
+.result-block{background:#fff;border:1px solid var(--paper3);border-radius:var(--radius);overflow:hidden;margin-top:14px;}
+.result-header{background:var(--ok);color:#fff;padding:9px 14px;font-size:.8rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.result-body{padding:16px;font-size:.88rem;line-height:1.7;color:var(--ink2);white-space:pre-wrap;}
+.result-block.loading .result-body{color:var(--ink4);font-style:italic;}
+.result-block.error{border-color:var(--err);}
+.result-block.error .result-header{background:var(--err);}
+
+/* ===== СТАТУС ===== */
+.status-line{font-size:.75rem;margin-top:8px;min-height:1.1em;display:flex;align-items:center;gap:5px;}
+.status-line.ok{color:var(--ok);}
+.status-line.err{color:var(--err);}
+.status-line.loading{color:var(--ink3);}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:12px;height:12px;border:2px solid var(--paper3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+
+/* ===== ПРЕДУПРЕЖДЕНИЕ ===== */
+.warn-box{background:var(--warn-l);border:1px solid #fde68a;border-radius:var(--radius);padding:10px 14px;font-size:.8rem;color:var(--warn);margin-top:12px;line-height:1.55;}
+.warn-box ul{margin-top:4px;margin-left:16px;}
+
+/* ===== ФОТО-БЛОК ===== */
+.photo-upload-zone{border:2px dashed var(--paper3);border-radius:var(--radius);background:var(--paper2);padding:28px;text-align:center;cursor:pointer;transition:.12s;}
+.photo-upload-zone:hover{border-color:var(--accent);background:var(--blue-l);}
+.photo-upload-zone.has-file{border-color:var(--ok);border-style:solid;background:var(--ok-l);}
+.photo-upload-zone .puz-icon{font-size:2rem;margin-bottom:6px;}
+.photo-upload-zone .puz-text{font-size:.85rem;font-weight:700;color:var(--ink2);}
+.photo-upload-zone.has-file .puz-text{color:var(--ok);}
+.photo-upload-zone .puz-sub{font-size:.72rem;color:var(--ink4);margin-top:2px;}
+#photo-file-input{display:none;}
+
+.photo-preview{margin-top:10px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--paper3);max-height:220px;text-align:center;background:#000;}
+.photo-preview img{max-height:220px;max-width:100%;object-fit:contain;display:block;margin:0 auto;}
+
+/* ===== ЕЖЕДНЕВНЫЙ ОТЧЁТ ===== */
+.smeta-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+.smeta-row{display:grid;grid-template-columns:2fr 80px 80px 70px;gap:8px;align-items:center;}
+.smeta-row input{font-size:.82rem;}
+.smeta-row .sr-label{font-size:.72rem;color:var(--ink4);}
+.btn-add-row{font-size:.78rem;color:var(--accent);background:none;border:1.5px dashed var(--blue-t);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;font-weight:600;width:100%;transition:.12s;}
+.btn-add-row:hover{background:var(--blue-l);}
+
+/* ===== PAYWALL ===== */
+
+
+/* ===== МОБИЛЬНЫЙ САЙДБАР ===== */
+.mob-header{display:none;background:var(--sidebar);color:#e2e8f0;padding:12px 16px;align-items:center;justify-content:space-between;}
+.mob-header h1{font-size:.95rem;font-weight:800;}
+.mob-toggle{background:none;border:none;color:#e2e8f0;font-size:1.3rem;cursor:pointer;}
+@media(max-width:700px){
+  .sidebar{display:none;position:fixed;inset:0;z-index:50;width:240px;}
+  .sidebar.mob-open{display:flex;}
+  .mob-header{display:flex;}
+  .content{padding:14px 16px;}
+  .topbar{padding:10px 16px;}
+  .smeta-row{grid-template-columns:1fr 70px 70px 50px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Мобильная шапка -->
+<div class="mob-header">
+  <h1>📐 Рабочий стол ПТО</h1>
+  <button class="mob-toggle" onclick="toggleSidebar()">☰</button>
+</div>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sb-eyebrow">ПТО</div>
+      <h1>Рабочий стол</h1>
+      <p>Инструменты инженера</p>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">Модули</div>
+      <button class="nav-item active" id="nav-ozhr" onclick="switchTab('ozhr')">
+        <span class="ni-icon">📝</span> Транслятор ОЖР
+      </button>
+      <button class="nav-item" id="nav-daily" onclick="switchTab('daily')">
+        <span class="ni-icon">📊</span> Ежедневный отчёт
+      </button>
+      <button class="nav-item" id="nav-photo" onclick="switchTab('photo')">
+        <span class="ni-icon">📷</span> Фото → ОЖР
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="usage-pill">
+        <div class="up-label">Режим работы</div>
+        <div class="up-dots" id="sidebar-dots"><div class="up-dot avail"></div></div>
+        <div class="up-text" id="sidebar-usage-text">проверка…</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Транслятор ОЖР</div>
+        <div class="topbar-sub" id="topbar-sub">Сленг прораба → официальный язык КС-6а</div>
+      </div>
+      <div class="topbar-right">
+        <span class="obj-badge" id="obj-badge-display">Объект не задан</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ================================================ -->
+      <!-- TAB 1: ТРАНСЛЯТОР ОЖР -->
+      <!-- ================================================ -->
+      <div class="tab-panel active" id="tab-ozhr">
+
+        <div class="section">
+          <div class="section-label">Настройки объекта</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="fgroup" style="margin:0;">
+              <label>Название объекта</label>
+              <input type="text" id="obj-name" placeholder="Школа на 500 мест, г. Уссурийск" oninput="updateObjBadge()">
+            </div>
+            <div class="fgroup" style="margin:0;">
+              <label>Дата записи</label>
+              <input type="text" id="ozhr-date" placeholder="дд.мм.гггг">
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Исходное сообщение</div>
+          <div class="fgroup">
+            <label>Текст от прораба (можно скопировать из WhatsApp/Telegram)</label>
+            <textarea id="ozhr-raw" rows="5" placeholder="Михалыч, мы сегодня залили плиту во второй секции, уложили кубов 30. Ещё арматуру связали на колоннах, тонн 5 ушло. Завтра приедет бетон на фундамент."></textarea>
+          </div>
+          <div class="fgroup">
+            <label>Дополнительный контекст (необязательно)</label>
+            <input type="text" id="ozhr-ctx" placeholder="Секция 2, оси А-В, отм. -1.500">
+          </div>
+          <button class="btn btn-primary" id="btn-ozhr" onclick="runOzhr()">
+            ⚙️ Перевести в формат ОЖР
+          </button>
+          <div class="status-line" id="ozhr-status"></div>
+        </div>
+
+        <div id="ozhr-result"></div>
+      </div>
+
+      <!-- ================================================ -->
+      <!-- TAB 2: ЕЖЕДНЕВНЫЙ ОТЧЁТ -->
+      <!-- ================================================ -->
+      <div class="tab-panel" id="tab-daily">
+
+        <div class="section">
+          <div class="section-label">Реквизиты отчёта</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+            <div class="fgroup" style="margin:0;">
+              <label>Объект</label>
+              <input type="text" id="daily-obj" placeholder="ЖК Северный, г. Хабаровск">
+            </div>
+            <div class="fgroup" style="margin:0;">
+              <label>Дата</label>
+              <input type="text" id="daily-date" placeholder="дд.мм.гггг">
+            </div>
+            <div class="fgroup" style="margin:0;">
+              <label>Ответственный</label>
+              <input type="text" id="daily-eng" placeholder="Иванов И.И., ПТО">
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Выполненные работы по смете</div>
+          <div style="display:grid;grid-template-columns:2fr 80px 80px 70px;gap:8px;margin-bottom:6px;">
+            <div class="sr-label" style="font-size:.7rem;color:var(--ink4);font-weight:700;">Наименование работ</div>
+            <div class="sr-label" style="font-size:.7rem;color:var(--ink4);font-weight:700;text-align:center;">Ед.изм.</div>
+            <div class="sr-label" style="font-size:.7rem;color:var(--ink4);font-weight:700;text-align:center;">По смете</div>
+            <div class="sr-label" style="font-size:.7rem;color:var(--ink4);font-weight:700;text-align:center;">Факт</div>
+          </div>
+          <div class="smeta-rows" id="smeta-rows">
+            <div class="smeta-row">
+              <input type="text" placeholder="Бетонирование ростверка">
+              <input type="text" placeholder="м³">
+              <input type="number" placeholder="30">
+              <input type="number" placeholder="28">
+            </div>
+            <div class="smeta-row">
+              <input type="text" placeholder="Вязка арматуры">
+              <input type="text" placeholder="т">
+              <input type="number" placeholder="5">
+              <input type="number" placeholder="5">
+            </div>
+          </div>
+          <button class="btn-add-row" onclick="addSmetaRow()">+ Добавить работу</button>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Дополнительно</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="fgroup" style="margin:0;">
+              <label>Погода / условия</label>
+              <input type="text" id="daily-weather" placeholder="t: +18°C, ясно, без осадков">
+            </div>
+            <div class="fgroup" style="margin:0;">
+              <label>Особые обстоятельства</label>
+              <input type="text" id="daily-notes" placeholder="Простой 2 ч. из-за ожидания бетона">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-daily" onclick="runDaily()">
+          📋 Сформировать ежедневный отчёт
+        </button>
+        <div class="status-line" id="daily-status"></div>
+        <div id="daily-result"></div>
+      </div>
+
+      <!-- ================================================ -->
+      <!-- TAB 3: ФОТО → ОЖР -->
+      <!-- ================================================ -->
+      <div class="tab-panel" id="tab-photo">
+
+        <div class="section">
+          <div class="section-label">Загрузка фото с объекта</div>
+          <label class="photo-upload-zone" id="photo-zone" for="photo-file-input">
+            <div class="puz-icon">📷</div>
+            <div class="puz-text" id="puz-text">Нажмите, чтобы выбрать фото</div>
+            <div class="puz-sub">JPG, PNG — фото с объекта, скриншот из мессенджера</div>
+          </label>
+          <input type="file" id="photo-file-input" accept="image/*" onchange="handlePhotoUpload(event)">
+          <div id="photo-preview-wrap"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Контекст для ИИ</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="fgroup" style="margin:0;">
+              <label>Подпись прораба к фото (если есть)</label>
+              <textarea id="photo-caption" rows="2" placeholder="закончили армировать 3 пролёт, всё нормально"></textarea>
+            </div>
+            <div class="fgroup" style="margin:0;">
+              <label>Объект / секция / оси</label>
+              <input type="text" id="photo-ctx" placeholder="Объект: ЖК, секция 3, оси Б-Г">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-photo" onclick="runPhoto()" disabled>
+          🔍 Описать фото для ОЖР
+        </button>
+        <div class="status-line" id="photo-status"></div>
+        <div id="photo-result"></div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /app -->
+
+
+
+<script>
+(function(){
+"use strict";
+
+// ============================================================
+// КОНФИГ
+// ============================================================
+var MODEL = "claude-sonnet-4-6";
+var photoDataUrl = null;
+
+// ============================================================
+// УТИЛИТЫ
+// ============================================================
+function $(id){ return document.getElementById(id); }
+
+function updateSidebarStatus(online){
+  var dots = $('sidebar-dots');
+  dots.innerHTML = '';
+  var d = document.createElement('div');
+  d.className = 'up-dot avail';
+  d.style.background = online ? '#2563eb' : '#f59e0b';
+  dots.appendChild(d);
+  $('sidebar-usage-text').textContent = online ? '✓ ИИ онлайн' : '✓ Офлайн-режим';
+}
+
+// ============================================================
+// ДАТА ПО УМОЛЧАНИЮ
+// ============================================================
+var todayStr = new Date().toLocaleDateString('ru-RU');
+$('ozhr-date').value = todayStr;
+$('daily-date').value = todayStr;
+
+// ============================================================
+// НАВИГАЦИЯ
+// ============================================================
+var TABS = {
+  ozhr:  {title:'Транслятор ОЖР',  sub:'Сленг прораба → официальный язык КС-6а'},
+  daily: {title:'Ежедневный отчёт', sub:'Позиции из сметы → готовый отчёт по объекту'},
+  photo: {title:'Фото → ОЖР',       sub:'Фотография с объекта → официальная запись'}
+};
+
+window.switchTab = function(name){
+  Object.keys(TABS).forEach(function(t){
+    $('tab-'+t).classList.toggle('active', t===name);
+    $('nav-'+t).classList.toggle('active', t===name);
+  });
+  $('topbar-title').textContent = TABS[name].title;
+  $('topbar-sub').textContent = TABS[name].sub;
+  $('sidebar').classList.remove('mob-open');
+};
+
+window.toggleSidebar = function(){
+  $('sidebar').classList.toggle('mob-open');
+};
+
+// ============================================================
+// ОБЪЕКТ — БЕЙДЖ
+// ============================================================
+window.updateObjBadge = function(){
+  var v = $('obj-name').value.trim();
+  $('obj-badge-display').textContent = v || 'Объект не задан';
+};
+
+// ============================================================
+// СТАТУС / РЕЗУЛЬТАТ
+// ============================================================
+function setStatus(elId, type, text){
+  var el = $(elId);
+  el.className = 'status-line ' + type;
+  if(type === 'loading'){
+    el.innerHTML = '<div class="spinner"></div>' + text;
+  } else {
+    el.textContent = (type==='ok'?'✓ ':type==='err'?'✕ ':'') + text;
+  }
+}
+
+function showResult(elId, headerText, body, isError){
+  var el = $(elId);
+  el.innerHTML =
+    '<div class="result-block' + (isError?' error':'') + '">' +
+      '<div class="result-header">' + headerText +
+        '<button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;padding:3px 10px;font-size:.7rem;" onclick="copyResult(\'' + elId + '\')">Копировать</button>' +
+      '</div>' +
+      '<div class="result-body">' + escHtml(body) + '</div>' +
+    '</div>';
+}
+
+window.copyResult = function(elId){
+  var body = $(elId).querySelector('.result-body');
+  if(!body) return;
+  navigator.clipboard.writeText(body.textContent).then(function(){
+    alert('Скопировано в буфер обмена');
+  });
+};
+
+function escHtml(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// ============================================================
+// CLAUDE API CALL
+// ============================================================
+async function callClaude(messages, maxTokens){
+  maxTokens = maxTokens || 1000;
+  var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: maxTokens,
+      messages: messages
+    })
+  });
+  if(!resp.ok){
+    var err = await resp.json().catch(function(){ return {}; });
+    throw new Error((err.error && err.error.message) || 'Ошибка API: ' + resp.status);
+  }
+  var data = await resp.json();
+  return data.content.map(function(b){ return b.type==='text'?b.text:''; }).join('');
+}
+
+// ============================================================
+// МОДУЛЬ 1: ТРАНСЛЯТОР ОЖР
+// ============================================================
+window.runOzhr = async function(){
+  var raw = $('ozhr-raw').value.trim();
+  if(!raw){ alert('Введите текст от прораба.'); return; }
+
+  var obj = $('obj-name').value.trim() || 'не указан';
+  var date = $('ozhr-date').value.trim() || todayStr;
+  var ctx = $('ozhr-ctx').value.trim();
+
+  $('btn-ozhr').disabled = true;
+  setStatus('ozhr-status','loading','Анализирую текст и формирую запись ОЖР…');
+  $('ozhr-result').innerHTML = '';
+
+  var prompt =
+    'Ты — опытный инженер ПТО строительной компании. Тебе нужно преобразовать сырой текст от прораба в официальную запись для Общего журнала работ (форма КС-6а).\n\n' +
+    'Объект: ' + obj + '\n' +
+    'Дата: ' + date + '\n' +
+    (ctx ? 'Контекст (оси, отметки): ' + ctx + '\n' : '') +
+    '\nТекст от прораба:\n"""\n' + raw + '\n"""\n\n' +
+    'Требования к записи:\n' +
+    '1. Официальный деловой стиль, ГОСТ-формулировки (не сленг)\n' +
+    '2. Указать виды работ, объёмы (если есть), ссылки на оси/отметки\n' +
+    '3. Если прораб не указал оси или отметки — отметить это явно как "требует уточнения"\n' +
+    '4. Если не указана марка бетона/материала — отметить как "требует уточнения"\n' +
+    '5. Добавить блок "⚠ Требует уточнения у прораба:" если есть недостающие данные\n' +
+    '6. Формат: сначала готовая запись для ОЖР, затем блок с недостающими данными\n\n' +
+    'Ответь только текстом записи, без лишних пояснений.';
+
+  try {
+    var result = await callClaude([{role:'user', content: prompt}]);
+    updateSidebarStatus(true);
+    setStatus('ozhr-status','ok','Запись сформирована — проверьте и вставьте в ОЖР');
+    showResult('ozhr-result', 'Запись для Общего журнала работ (КС-6а) · ' + date, result, false);
+  } catch(e) {
+    var fallback = ozhrFallback(raw, obj, date, ctx);
+    updateSidebarStatus(false);
+    setStatus('ozhr-status','ok','Офлайн-режим: базовый перевод. Для полного ИИ откройте файл через GitHub Pages.');
+    showResult('ozhr-result', 'Запись для ОЖР (офлайн-режим) · ' + date, fallback, false);
+  }
+  $('btn-ozhr').disabled = false;
+};
+
+// ============================================================
+// МОДУЛЬ 2: ЕЖЕДНЕВНЫЙ ОТЧЁТ
+// ============================================================
+window.addSmetaRow = function(){
+  var rows = $('smeta-rows');
+  var row = document.createElement('div');
+  row.className = 'smeta-row';
+  row.innerHTML =
+    '<input type="text" placeholder="Наименование работ">' +
+    '<input type="text" placeholder="ед.">' +
+    '<input type="number" placeholder="план">' +
+    '<input type="number" placeholder="факт">';
+  rows.appendChild(row);
+};
+
+window.runDaily = async function(){
+
+  var obj = $('daily-obj').value.trim() || 'не указан';
+  var date = $('daily-date').value.trim() || todayStr;
+  var eng = $('daily-eng').value.trim() || 'не указан';
+  var weather = $('daily-weather').value.trim();
+  var notes = $('daily-notes').value.trim();
+
+  // Собираем строки сметы
+  var rows = $('smeta-rows').querySelectorAll('.smeta-row');
+  var worksLines = [];
+  rows.forEach(function(row){
+    var inputs = row.querySelectorAll('input');
+    var name = inputs[0].value.trim();
+    var unit = inputs[1].value.trim();
+    var plan = inputs[2].value.trim();
+    var fact = inputs[3].value.trim();
+    if(name) worksLines.push('- ' + name + (unit?' ('+unit+')':'') + ': план '+( plan||'—') + ', факт '+(fact||'—'));
+  });
+
+  if(worksLines.length === 0){ alert('Добавьте хотя бы одну работу.'); return; }
+
+  $('btn-daily').disabled = true;
+  setStatus('daily-status','loading','Формирую ежедневный отчёт…');
+  $('daily-result').innerHTML = '';
+
+  var prompt =
+    'Ты — инженер ПТО строительной компании. Сформируй ежедневный производственный отчёт по объекту.\n\n' +
+    'Объект: ' + obj + '\n' +
+    'Дата: ' + date + '\n' +
+    'Ответственный: ' + eng + '\n' +
+    (weather ? 'Погода / условия: ' + weather + '\n' : '') +
+    (notes ? 'Особые обстоятельства: ' + notes + '\n' : '') +
+    '\nВыполненные работы (наименование, ед.изм., план, факт):\n' + worksLines.join('\n') + '\n\n' +
+    'Требования к отчёту:\n' +
+    '1. Официальный деловой стиль\n' +
+    '2. Раздел "Выполнено за смену": перечислить работы с объёмами\n' +
+    '3. Раздел "Выполнение плана": по каждой позиции указать % выполнения и краткий вывод (в норме / отставание / перевыполнение)\n' +
+    '4. Раздел "Замечания и мероприятия": если есть отставание или особые обстоятельства — предложить мероприятия\n' +
+    '5. Итоговая строка: общая оценка дня (плановый ход / незначительное отставание / критическое отставание)\n\n' +
+    'Ответь только текстом отчёта.';
+
+  try {
+    var result = await callClaude([{role:'user', content: prompt}]);
+    updateSidebarStatus(true);
+    setStatus('daily-status','ok','Отчёт сформирован');
+    showResult('daily-result', 'Ежедневный производственный отчёт · ' + date, result, false);
+  } catch(e) {
+    var fallback = dailyFallback(worksLines, obj, date, eng, weather, notes);
+    updateSidebarStatus(false);
+    setStatus('daily-status','ok','Офлайн-режим: базовый отчёт. Для полного ИИ откройте через GitHub Pages.');
+    showResult('daily-result', 'Ежедневный отчёт (офлайн-режим) · ' + date, fallback, false);
+  }
+  $('btn-daily').disabled = false;
+};
+
+// ============================================================
+// МОДУЛЬ 3: ФОТО → ОЖР
+// ============================================================
+window.handlePhotoUpload = function(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    photoDataUrl = ev.target.result;
+    $('photo-zone').classList.add('has-file');
+    $('puz-text').textContent = file.name;
+    var wrap = $('photo-preview-wrap');
+    wrap.innerHTML = '<div class="photo-preview"><img src="' + photoDataUrl + '" alt="Фото объекта"></div>';
+    $('btn-photo').disabled = false;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.runPhoto = async function(){
+  if(!photoDataUrl){ alert('Загрузите фото.'); return; }
+
+  var caption = $('photo-caption').value.trim();
+  var ctx = $('photo-ctx').value.trim();
+
+  $('btn-photo').disabled = true;
+  setStatus('photo-status','loading','Анализирую фото и формирую запись…');
+  $('photo-result').innerHTML = '';
+
+  // Определяем media type
+  var mediaType = 'image/jpeg';
+  if(photoDataUrl.indexOf('data:image/png') === 0) mediaType = 'image/png';
+  else if(photoDataUrl.indexOf('data:image/webp') === 0) mediaType = 'image/webp';
+  var base64 = photoDataUrl.split(',')[1];
+
+  var textPrompt =
+    'Ты — опытный инженер ПТО строительной компании. Тебе прислали фотографию с объекта.\n\n' +
+    (ctx ? 'Контекст: ' + ctx + '\n' : '') +
+    (caption ? 'Подпись прораба к фото: "' + caption + '"\n' : '') +
+    '\nТвоя задача:\n' +
+    '1. Внимательно осмотри фото и определи, какие строительные работы изображены\n' +
+    '2. Сформируй официальную запись для Общего журнала работ (ОЖР, форма КС-6а)\n' +
+    '3. Используй правильные ГОСТ-формулировки (не сленг)\n' +
+    '4. Опиши вид работ, видимое состояние конструкций, наблюдаемые объёмы (если можно оценить)\n' +
+    '5. Если на фото видны нарушения (неправильное армирование, несоответствие проекту и т.п.) — указать отдельным блоком\n' +
+    '6. Добавь блок "Требует уточнения у прораба" для данных, которые не видны на фото\n\n' +
+    'Ответь только текстом записи для ОЖР.';
+
+  try {
+    var result = await callClaude([{
+      role: 'user',
+      content: [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+        { type: 'text', text: textPrompt }
+      ]
+    }]);
+    updateSidebarStatus(true);
+    setStatus('photo-status','ok','Описание сформировано — проверьте перед внесением в ОЖР');
+    showResult('photo-result', 'Запись для ОЖР по фото с объекта', result, false);
+  } catch(e) {
+    updateSidebarStatus(false);
+    setStatus('photo-status','err','Офлайн-режим: анализ фото требует интернета. Опишите фото вручную в поле «Подпись прораба» и используйте Транслятор ОЖР.');
+  }
+  $('btn-photo').disabled = false;
+};
+
+
+// ============================================================
+// ОФЛАЙН-FALLBACK: расширенный словарь (когда нет интернета)
+// ============================================================
+var SLANG = [
+  ['залил[аи]?\\b','выполнено бетонирование'],['заливали','устройство монолитных конструкций'],
+  ['кубов|кубов\\b|куб\\b|куба\\b','м³'],['тонн\\b|тонна\\b|т\\b','т.'],
+  ['метров\\b|метра\\b|п\\.м\\.','п.м.'],
+  ['арматуру связали|связали арматуру|вязали арматуру|связали','вязка арматурного каркаса'],
+  ['кинули кабель|прокинули кабель','прокладка кабельной линии'],
+  ['повесили лотки|прикрутили лотки','монтаж металлических кабельных лотков'],
+  ['выкопали|экскаватор копал|копали','разработка грунта механизированным способом'],
+  ['закопали|засыпали','обратная засыпка грунта с уплотнением'],
+  ['залили фундамент|фундамент залили','бетонирование фундаментной конструкции'],
+  ['плиту перекрытия|перекрытие залили','устройство монолитного перекрытия'],
+  ['опалубку поставили|опалубка готова','устройство опалубки'],
+  ['опалубку сняли|сняли опалубку','распалубка конструкции'],
+  ['кирпич клали|кладка шла','кладка из кирпича'],
+  ['штукатурили|штукатурку нанесли','нанесение штукатурного покрытия'],
+  ['гидроизоляцию сделали|гидроизоляция','устройство гидроизоляционного слоя'],
+  ['кровлю делали|кровля','устройство кровельного покрытия'],
+  ['окна ставили|окна вставили','монтаж оконных блоков'],
+  ['двери ставили|двери вставили','монтаж дверных блоков'],
+  ['сваи забивали|сваи завели','погружение свайных элементов'],
+  ['ростверк','бетонирование ростверка'],
+  ['колонны','устройство монолитных колонн'],
+  ['стены','устройство монолитных стен'],
+];
+
+function applySlang(text){
+  var t = text;
+  SLANG.forEach(function(pair){
+    try{
+      var re = new RegExp('(' + pair[0] + ')', 'gi');
+      t = t.replace(re, pair[1]);
+    }catch(e){}
+  });
+  return t;
+}
+
+function ozhrFallback(raw, obj, date, ctx){
+  var translated = applySlang(raw);
+  var hasNumbers = /\d+/.test(raw);
+  var hasAxes = /ос[ьяи]|отметк|ряд|секци/i.test(raw);
+  var hasMaterial = /марк[аи]|бетон [а-яА-Я]\d|класс/i.test(raw);
+  
+  var result = 'ЗАПИСЬ В ОЖР (КС-6а)\n';
+  result += 'Объект: ' + obj + '\n';
+  result += 'Дата: ' + date + '\n';
+  if(ctx) result += 'Привязка: ' + ctx + '\n';
+  result += '\nОФИЦИАЛЬНАЯ ФОРМУЛИРОВКА:\n' + translated + '\n';
+  
+  var missing = [];
+  if(!hasNumbers) missing.push('Точные объёмы выполненных работ (м³, т, п.м., шт.)');
+  if(!hasAxes && !ctx) missing.push('Привязка к осям и высотным отметкам по проекту');
+  if(!hasMaterial) missing.push('Марка/класс применяемого материала (бетон В25, сталь А500С и т.д.)');
+  
+  if(missing.length){
+    result += '\n⚠ ТРЕБУЕТ УТОЧНЕНИЯ У ПРОРАБА:\n';
+    missing.forEach(function(m){ result += '  • ' + m + '\n'; });
+  }
+  return result;
+}
+
+function dailyFallback(worksLines, obj, date, eng, weather, notes){
+  var result = 'ЕЖЕДНЕВНЫЙ ПРОИЗВОДСТВЕННЫЙ ОТЧЁТ\n';
+  result += '═══════════════════════════════════\n';
+  result += 'Объект: ' + obj + '\n';
+  result += 'Дата: ' + date + '\n';
+  result += 'Ответственный: ' + eng + '\n';
+  if(weather) result += 'Условия производства работ: ' + weather + '\n';
+  result += '\nВЫПОЛНЕНО ЗА СМЕНУ:\n';
+  worksLines.forEach(function(l){ result += l + '\n'; });
+  if(notes) result += '\nОСОБЫЕ ОБСТОЯТЕЛЬСТВА:\n' + notes + '\n';
+  result += '\n(Офлайн-режим: откройте через GitHub Pages для полного ИИ-отчёта с анализом отставания)';
+  return result;
+}
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
+updateSidebarStatus(false);
+
+})();
+</script>
+</body>
+</html>
